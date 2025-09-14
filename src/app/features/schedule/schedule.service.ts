@@ -37,6 +37,27 @@ export class ScheduleService {
     return daysToShow;
   }
 
+  getMonthDaysToShowByMonthYear(
+    numberOfWeeks: number,
+    month: number,
+    year: number,
+  ): string[] {
+    const firstDayOfMonth = new Date(year, month, 1);
+
+    const firstSunday = new Date(firstDayOfMonth);
+    firstSunday.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+
+    const totalDays = numberOfWeeks * 7;
+    const daysToShow: string[] = [];
+    for (let i = 0; i < totalDays; i++) {
+      const currentDate = new Date(firstSunday);
+      currentDate.setDate(firstSunday.getDate() + i);
+      daysToShow.push(this._dateService.todayStr(currentDate.getTime()));
+    }
+
+    return daysToShow;
+  }
+
   getEventDayStr(ev: ScheduleEvent): string | null {
     const data = ev.data;
 

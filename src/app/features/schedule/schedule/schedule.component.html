@@ -1,4 +1,4 @@
-<!--  <div class="title">February 2019 Week 6</div>-->
+<div class="title">February 2019 Week 6</div>
 
 <header>
   <!--  <div class="main-controls">-->
@@ -53,7 +53,19 @@
 
     @if (isMonthView()) {
       <div class="month-header">
+        <button
+          mat-icon-button
+          (click)="getPrevMonth()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+        </button>
         <div class="month-title">{{ daysToShow()[14] | localeDate: 'MMMM yyyy' }}</div>
+        <button
+          mat-icon-button
+          (click)="getNextMonth()"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
     }
   </div>
@@ -65,6 +77,8 @@
       [events]="events()"
       [daysToShow]="daysToShow()"
       [weeksToShow]="weeksToShow()"
+      [currentMonth]="currentMonth"
+      [currentYear]="currentYear"
     ></schedule-month>
   } @else {
     <schedule-week

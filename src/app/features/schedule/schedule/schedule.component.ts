@@ -34,6 +34,8 @@ import { selectTaskRepeatCfgsWithAndWithoutStartTime } from '../../task-repeat-c
 import { ScheduleWeekComponent } from '../schedule-week/schedule-week.component';
 import { ScheduleMonthComponent } from '../schedule-month/schedule-month.component';
 import { ScheduleService } from '../schedule.service';
+import { ViewChild } from '@angular/core';
+import { signal } from '@angular/core';
 
 @Component({
   selector: 'schedule',
@@ -51,11 +53,18 @@ export class ScheduleComponent implements AfterViewInit {
   taskService = inject(TaskService);
   layoutService = inject(LayoutService);
   scheduleService = inject(ScheduleService);
+  // scheduleMonthComponent = inject(ScheduleMonthComponent);
   private _matDialog = inject(MatDialog);
   private _calendarIntegrationService = inject(CalendarIntegrationService);
   private _store = inject(Store);
   private _globalTrackingIntervalService = inject(GlobalTrackingIntervalService);
   private _route = inject(ActivatedRoute);
+
+  @ViewChild(ScheduleMonthComponent)
+  scheduleMonthComponent!: ScheduleMonthComponent;
+
+  currentMonth = signal(new Date().getMonth());
+  currentYear = signal(new Date().getFullYear());
 
   private _currentTimeViewMode = computed(() => this.layoutService.selectedTimeView());
   isMonthView = computed(() => this._currentTimeViewMode() === 'month');
@@ -110,10 +119,33 @@ export class ScheduleComponent implements AfterViewInit {
     this._todayDateStr();
 
     if (selectedView === 'month') {
-      return this.scheduleService.getMonthDaysToShow(count);
+      // return this.scheduleService.getMonthDaysToShow(count);
+      return this.scheduleService.getMonthDaysToShowByMonthYear(
+        count,
+        this.currentMonth() - 1,
+        this.currentYear(),
+      );
     }
     return this.scheduleService.getDaysToShow(count);
   });
+
+  getPrevMonth(): void {
+    if (this.currentMonth() === 0) {
+      this.currentMonth.set(11);
+      this.currentYear.set(this.currentYear() - 1);
+    } else {
+      this.currentMonth.set(this.currentMonth() - 1);
+    }
+  }
+
+  getNextMonth(): void {
+    if (this.currentMonth() === 11) {
+      this.currentMonth.set(0);
+      this.currentYear.set(this.currentYear() + 1);
+    } else {
+      this.currentMonth.set(this.currentMonth() + 1);
+    }
+  }
 
   weeksToShow = computed(() => Math.ceil(this.daysToShow().length / 7));
 
