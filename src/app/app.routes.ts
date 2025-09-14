@@ -64,11 +64,11 @@ export const APP_ROUTES: Routes = [
   {
     path: 'tag/:id/tasks',
     // eagerly loaded
-    component: TagTaskPageComponent,
-    // loadComponent: () =>
-    //   import('./pages/tag-task-page/tag-task-page.component').then(
-    //     (m) => m.TagTaskPageComponent,
-    //   ),
+    // component: TagTaskPageComponent,
+    loadComponent: () =>
+      import('./pages/tag-task-page/tag-task-page.component').then(
+        (m) => m.TagTaskPageComponent,
+      ),
     data: { page: 'tag-tasks' },
     canActivate: [ValidTagIdGuard, FocusOverlayOpenGuard],
   },
