@@ -24,10 +24,6 @@ export class ScheduleMonthComponent {
 
   T: typeof T = T;
 
-  // Tambahkan state bulan dan tahun
-  @Input() currentMonth: number = new Date().getMonth();
-  @Input() currentYear: number = new Date().getFullYear();
-
   getDayClass(day: string): string {
     return this._scheduleService.getDayClass(day);
   }
@@ -50,24 +46,5 @@ export class ScheduleMonthComponent {
 
   getEventDayStr(ev: ScheduleEvent): string | null {
     return this._scheduleService.getEventDayStr(ev);
-  }
-
-  // Fungsi navigasi bulan
-  getPrevMonth(): void {
-    if (this.currentMonth === 0) {
-      this.currentMonth = 11;
-      this.currentYear--;
-    } else {
-      this.currentMonth--;
-    }
-  }
-
-  getNextMonth(): void {
-    if (this.currentMonth === 11) {
-      this.currentMonth = 0;
-      this.currentYear++;
-    } else {
-      this.currentMonth++;
-    }
   }
 }

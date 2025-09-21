@@ -19,29 +19,25 @@ export class ScheduleService {
     return daysToShow;
   }
 
-  getMonthDaysToShow(numberOfWeeks: number): string[] {
-    const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  // getMonthDaysToShow(numberOfWeeks: number): string[] {
+  //   const today = new Date();
+  //   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const firstSunday = new Date(firstDayOfMonth);
-    firstSunday.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+  //   const firstSunday = new Date(firstDayOfMonth);
+  //   firstSunday.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
 
-    const totalDays = numberOfWeeks * 7;
-    const daysToShow: string[] = [];
-    for (let i = 0; i < totalDays; i++) {
-      const currentDate = new Date(firstSunday);
-      currentDate.setDate(firstSunday.getDate() + i);
-      daysToShow.push(this._dateService.todayStr(currentDate.getTime()));
-    }
+  //   const totalDays = numberOfWeeks * 7;
+  //   const daysToShow: string[] = [];
+  //   for (let i = 0; i < totalDays; i++) {
+  //     const currentDate = new Date(firstSunday);
+  //     currentDate.setDate(firstSunday.getDate() + i);
+  //     daysToShow.push(this._dateService.todayStr(currentDate.getTime()));
+  //   }
 
-    return daysToShow;
-  }
+  //   return daysToShow;
+  // }
 
-  getMonthDaysToShowByMonthYear(
-    numberOfWeeks: number,
-    month: number,
-    year: number,
-  ): string[] {
+  getMonthDaysToShow(numberOfWeeks: number, month: number, year: number): string[] {
     const firstDayOfMonth = new Date(year, month, 1);
 
     const firstSunday = new Date(firstDayOfMonth);
@@ -166,6 +162,21 @@ export class ScheduleService {
 
     return classes;
   }
+
+  // getDayClass(day: string, currentMonth: number, currentYear: number): string {
+  //   const dayDate = new Date(day);
+  //   const isCurrentMonth =
+  //     dayDate.getMonth() === currentMonth &&
+  //     dayDate.getFullYear() === currentYear;
+  //   const today = new Date();
+  //   const isToday = dayDate.toDateString() === today.toDateString();
+
+  //   let classes = '';
+  //   if (!isCurrentMonth) classes += ' other-month';
+  //   if (isToday) classes += ' today';
+
+  //   return classes;
+  // }
 
   hasEventsForDay(day: string, events: ScheduleEvent[] | null): boolean {
     if (!events) {

@@ -34,7 +34,6 @@ import { selectTaskRepeatCfgsWithAndWithoutStartTime } from '../../task-repeat-c
 import { ScheduleWeekComponent } from '../schedule-week/schedule-week.component';
 import { ScheduleMonthComponent } from '../schedule-month/schedule-month.component';
 import { ScheduleService } from '../schedule.service';
-import { ViewChild } from '@angular/core';
 import { signal } from '@angular/core';
 
 @Component({
@@ -53,15 +52,11 @@ export class ScheduleComponent implements AfterViewInit {
   taskService = inject(TaskService);
   layoutService = inject(LayoutService);
   scheduleService = inject(ScheduleService);
-  // scheduleMonthComponent = inject(ScheduleMonthComponent);
   private _matDialog = inject(MatDialog);
   private _calendarIntegrationService = inject(CalendarIntegrationService);
   private _store = inject(Store);
   private _globalTrackingIntervalService = inject(GlobalTrackingIntervalService);
   private _route = inject(ActivatedRoute);
-
-  @ViewChild(ScheduleMonthComponent)
-  scheduleMonthComponent!: ScheduleMonthComponent;
 
   currentMonth = signal(new Date().getMonth());
   currentYear = signal(new Date().getFullYear());
@@ -119,10 +114,9 @@ export class ScheduleComponent implements AfterViewInit {
     this._todayDateStr();
 
     if (selectedView === 'month') {
-      // return this.scheduleService.getMonthDaysToShow(count);
-      return this.scheduleService.getMonthDaysToShowByMonthYear(
+      return this.scheduleService.getMonthDaysToShow(
         count,
-        this.currentMonth() - 1,
+        this.currentMonth(),
         this.currentYear(),
       );
     }
