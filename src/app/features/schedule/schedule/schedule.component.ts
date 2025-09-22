@@ -35,10 +35,26 @@ import { ScheduleWeekComponent } from '../schedule-week/schedule-week.component'
 import { ScheduleMonthComponent } from '../schedule-month/schedule-month.component';
 import { ScheduleService } from '../schedule.service';
 import { signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'schedule',
-  imports: [LocaleDatePipe, ScheduleWeekComponent, ScheduleMonthComponent, MatIcon],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    FormsModule,
+    LocaleDatePipe,
+    ScheduleWeekComponent,
+    ScheduleMonthComponent,
+    MatIconModule,
+    MatMenuModule,
+    MatTooltip,
+  ],
   templateUrl: './schedule.component.html',
   styleUrl: './schedule.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +76,10 @@ export class ScheduleComponent implements AfterViewInit {
 
   currentMonth = signal(new Date().getMonth());
   currentYear = signal(new Date().getFullYear());
+
+  isEditMonthYear = signal(false);
+  editMonth: number = this.currentMonth() + 1;
+  editYear: number = this.currentYear();
 
   private _currentTimeViewMode = computed(() => this.layoutService.selectedTimeView());
   isMonthView = computed(() => this._currentTimeViewMode() === 'month');
@@ -138,6 +158,33 @@ export class ScheduleComponent implements AfterViewInit {
       this.currentYear.set(this.currentYear() + 1);
     } else {
       this.currentMonth.set(this.currentMonth() + 1);
+    }
+  }
+
+  showEditMonthYear(): void {
+    this.editMonth = this.currentMonth() + 1;
+    this.editYear = this.currentYear();
+    this.isEditMonthYear.set(true);
+  }
+
+  cancelEditMonthYear(): void {
+    this.isEditMonthYear.set(false);
+  }
+
+  jumpToMonthYear(): void {
+    const month = this.editMonth - 1;
+    const year = this.editYear;
+    if (
+      !isNaN(month) &&
+      month >= 0 &&
+      month <= 11 &&
+      !isNaN(year) &&
+      year > 1900 &&
+      year < 2100
+    ) {
+      this.currentMonth.set(month);
+      this.currentYear.set(year);
+      this.isEditMonthYear.set(false);
     }
   }
 

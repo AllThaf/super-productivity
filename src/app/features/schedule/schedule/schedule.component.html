@@ -54,13 +54,69 @@
         <button
           mat-icon-button
           (click)="getPrevMonth()"
+          matTooltip="Previous month"
         >
           <mat-icon>chevron_left</mat-icon>
         </button>
-        <div class="month-title">{{ daysToShow()[14] | localeDate: 'MMMM yyyy' }}</div>
+        <div
+          class="month-title"
+          (click)="showEditMonthYear()"
+          style="cursor: pointer"
+          matTooltip="Jump month/year"
+        >
+          @if (!isEditMonthYear()) {
+            {{ daysToShow()[14] | localeDate: 'MMMM yyyy' }}
+          } @else {
+            <form
+              style="display: inline-flex; gap: 4px; align-items: center"
+              (ngSubmit)="jumpToMonthYear()"
+              autocomplete="off"
+            >
+              <input
+                type="text"
+                maxlength="2"
+                size="2"
+                style="width: 2.5em; text-align: center"
+                [(ngModel)]="editMonth"
+                name="month"
+                autocomplete="off"
+                required
+              />
+              /
+              <input
+                type="text"
+                maxlength="4"
+                size="4"
+                style="width: 3.5em; text-align: center"
+                [(ngModel)]="editYear"
+                name="year"
+                autocomplete="off"
+                required
+              />
+              <button
+                type="submit"
+                mat-icon-button
+                style="margin-left: 2px"
+                (click)="$event.stopPropagation()"
+                matTooltip="Go to month/year"
+              >
+                <mat-icon>check</mat-icon>
+              </button>
+              <button
+                type="button"
+                mat-icon-button
+                (click)="cancelEditMonthYear(); $event.stopPropagation()"
+                matTooltip="Cancel"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </form>
+          }
+        </div>
         <button
           mat-icon-button
           (click)="getNextMonth()"
+          matTooltip="Next month"
         >
           <mat-icon>chevron_right</mat-icon>
         </button>
