@@ -29,7 +29,6 @@ import { FH } from '../schedule.const';
 import { mapToScheduleDays } from '../map-schedule-data/map-to-schedule-days';
 import { mapScheduleDaysToScheduleEvents } from '../map-schedule-data/map-schedule-days-to-schedule-events';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatIcon } from '@angular/material/icon';
 import { selectTaskRepeatCfgsWithAndWithoutStartTime } from '../../task-repeat-cfg/store/task-repeat-cfg.selectors';
 import { ScheduleWeekComponent } from '../schedule-week/schedule-week.component';
 import { ScheduleMonthComponent } from '../schedule-month/schedule-month.component';
@@ -78,8 +77,8 @@ export class ScheduleComponent implements AfterViewInit {
   currentYear = signal(new Date().getFullYear());
 
   isEditMonthYear = signal(false);
-  editMonth: number = this.currentMonth() + 1;
-  editYear: number = this.currentYear();
+  editMonth: string = '';
+  editYear: string = '';
 
   private _currentTimeViewMode = computed(() => this.layoutService.selectedTimeView());
   isMonthView = computed(() => this._currentTimeViewMode() === 'month');
@@ -162,8 +161,8 @@ export class ScheduleComponent implements AfterViewInit {
   }
 
   showEditMonthYear(): void {
-    this.editMonth = this.currentMonth() + 1;
-    this.editYear = this.currentYear();
+    this.editMonth = String(this.currentMonth() + 1).padStart(2, '0');
+    this.editYear = String(this.currentYear());
     this.isEditMonthYear.set(true);
   }
 
@@ -172,8 +171,8 @@ export class ScheduleComponent implements AfterViewInit {
   }
 
   jumpToMonthYear(): void {
-    const month = this.editMonth - 1;
-    const year = this.editYear;
+    const month = parseInt(this.editMonth, 10) - 1;
+    const year = parseInt(this.editYear, 10);
     if (
       !isNaN(month) &&
       month >= 0 &&

@@ -80,6 +80,7 @@
                 [(ngModel)]="editMonth"
                 name="month"
                 autocomplete="off"
+                (click)="$event.stopPropagation()"
                 required
               />
               /
@@ -91,6 +92,7 @@
                 [(ngModel)]="editYear"
                 name="year"
                 autocomplete="off"
+                (click)="$event.stopPropagation()"
                 required
               />
               <button
