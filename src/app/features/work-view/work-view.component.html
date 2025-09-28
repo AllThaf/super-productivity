@@ -112,13 +112,17 @@
             <div class="no-tasks-illu-wrapper">
               <div class="inline-block-container">
                 <img
+                  rel="preload"
                   class="show-light-only"
                   src="assets/illu/horizon.svg"
                   alt="illu"
+                  fetchpriority="high"
                 />
                 <img
+                  rel="preload"
                   class="show-dark-only"
                   src="assets/illu/horizon-dark.svg"
+                  fetchpriority="high"
                   alt="illu"
                 />
               </div>
@@ -182,12 +186,19 @@
               ></task-list>
             }
           } @else {
-            <task-list
-              class="tour-undoneList"
-              [tasks]="customized.list"
-              listId="PARENT"
-              listModelId="UNDONE"
-            ></task-list>
+            <cdk-virtual-scroll-viewport
+              class="task-list-viewport"
+              [itemSize]="virtualScrollConfig.itemSize"
+              [minBufferPx]="virtualScrollConfig.minBufferPx"
+              [maxBufferPx]="virtualScrollConfig.maxBufferPx"
+            >
+              <task-list
+                class="tour-undoneList"
+                [tasks]="customized.list"
+                listId="PARENT"
+                listModelId="UNDONE"
+              ></task-list>
+            </cdk-virtual-scroll-viewport>
           }
         }
 

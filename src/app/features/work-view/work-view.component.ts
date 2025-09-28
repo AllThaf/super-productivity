@@ -48,6 +48,8 @@ import { TaskListComponent } from '../tasks/task-list/task-list.component';
 import { SplitComponent } from './split/split.component';
 import { BacklogComponent } from './backlog/backlog.component';
 import { AsyncPipe, CommonModule } from '@angular/common';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { imagePreloadDirective } from '../../shared/image-preload.directive';
 import { MsToStringPipe } from '../../ui/duration/ms-to-string.pipe';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -75,6 +77,7 @@ import { FinishDayBtnComponent } from './finish-day-btn/finish-day-btn.component
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    ScrollingModule,
     CdkDropListGroup,
     CdkScrollable,
     MatTooltip,
@@ -96,6 +99,19 @@ import { FinishDayBtnComponent } from './finish-day-btn/finish-day-btn.component
   ],
 })
 export class WorkViewComponent implements OnInit, OnDestroy, AfterContentInit {
+  // Performance tracking
+  private readonly performanceMetrics = {
+    componentLoadStart: performance.now(),
+    firstDataLoad: 0,
+    renderComplete: 0,
+  };
+
+  // Virtual scrolling configuration
+  readonly virtualScrollConfig = {
+    itemSize: 50,
+    minBufferPx: 200,
+    maxBufferPx: 400,
+  };
   taskService = inject(TaskService);
   takeABreakService = inject(TakeABreakService);
   planningModeService = inject(PlanningModeService);
@@ -230,6 +246,9 @@ export class WorkViewComponent implements OnInit, OnDestroy, AfterContentInit {
   }
 
   ngOnInit(): void {
+    // Track initial load time
+    this.performanceMetrics.firstDataLoad =
+      performance.now() - this.performanceMetrics.componentLoadStart;
     // preload
     // TODO check
     // this._subs.add(this.workContextService.backlogTasks$.subscribe());
@@ -248,6 +267,10 @@ export class WorkViewComponent implements OnInit, OnDestroy, AfterContentInit {
   }
 
   ngAfterContentInit(): void {
+    // Track render complete time
+    this.performanceMetrics.renderComplete =
+      performance.now() - this.performanceMetrics.componentLoadStart;
+    console.log('Performance Metrics:', this.performanceMetrics);
     this._subs.add(
       this.upperContainerScroll$.subscribe(({ target }) => {
         if ((target as HTMLElement).scrollTop !== 0) {

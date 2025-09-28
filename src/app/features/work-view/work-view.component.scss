@@ -18,8 +18,26 @@ h1 {
   text-align: center;
 }
 
+.task-list-wrapper {
+  position: relative;
+  height: calc(100% - var(--header-height));
+  overflow: hidden;
+}
+
 h2 {
   text-align: center;
+}
+
+.task-list-viewport {
+  height: 100%;
+  width: 100%;
+
+  &::ng-deep {
+    .cdk-virtual-scroll-content-wrapper {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
 }
 
 .wrapper {
