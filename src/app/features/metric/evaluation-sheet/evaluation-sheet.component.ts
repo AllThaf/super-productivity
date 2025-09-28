@@ -13,7 +13,7 @@ import { MetricService } from '../metric.service';
 import { ObstructionService } from '../obstruction/obstruction.service';
 import { ImprovementService } from '../improvement/improvement.service';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, shareReplay } from 'rxjs/operators';
 import { T } from '../../../t.const';
 import { DialogAddNoteComponent } from '../../note/dialog-add-note/dialog-add-note.component';
 import { MatDialog } from '@angular/material/dialog';
@@ -56,13 +56,26 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
 })
 export class EvaluationSheetComponent implements OnDestroy, OnInit {
-  obstructionService = inject(ObstructionService);
-  improvementService = inject(ImprovementService);
-  workContextService = inject(WorkContextService);
-  private _metricService = inject(MetricService);
-  private _matDialog = inject(MatDialog);
-  private _cd = inject(ChangeDetectorRef);
-  private _dateService = inject(DateService);
+  // Inject services
+  private readonly obstructionService = inject(ObstructionService);
+  private readonly improvementService = inject(ImprovementService);
+  private readonly workContextService = inject(WorkContextService);
+  private readonly _metricService = inject(MetricService);
+  private readonly _matDialog = inject(MatDialog);
+  private readonly _cd = inject(ChangeDetectorRef);
+  private readonly _dateService = inject(DateService);
+
+  // Memoized observables
+  readonly obstructions$ = this.obstructionService.obstructions$.pipe(
+    shareReplay(1)
+  );
+  readonly improvements$ = this.improvementService.improvements$.pipe(
+    shareReplay(1)
+  );
+
+  // Track by function for better performance
+  trackById = (index: number, item: any): string => item?.id || index;
+
 
   readonly save = output<any>();
   T: typeof T = T;
@@ -186,10 +199,18 @@ export class EvaluationSheetComponent implements OnDestroy, OnInit {
   }
 
   private _update(updateData: Partial<MetricCopy>): void {
-    this.metricForDay = {
-      ...(this.metricForDay as MetricCopy),
+    if (!this.metricForDay) return;
+    
+    const updatedMetric = {
+      ...this.metricForDay,
       ...updateData,
-    } as MetricCopy;
-    this._metricService.upsertMetric(this.metricForDay as MetricCopy);
+    };
+    
+    // Only update if there are actual changes
+    if (JSON.stringify(this.metricForDay) !== JSON.stringify(updatedMetric)) {
+      this.metricForDay = updatedMetric;
+      this._metricService.upsertMetric(updatedMetric);
+      this._cd.markForCheck(); // Use markForCheck instead of detectChanges
+    }
   }
 }
