@@ -12,12 +12,17 @@ import { TagTaskPageComponent } from './pages/tag-task-page/tag-task-page.compon
 
 export const APP_ROUTES: Routes = [
   {
+    path: '',
+    redirectTo: `/tag/${TODAY_TAG.id}/tasks`,
+    pathMatch: 'full'
+  },
+  {
     path: 'config',
     loadComponent: () =>
       import('./pages/config-page/config-page.component').then(
         (m) => m.ConfigPageComponent,
       ),
-    data: { page: 'config' },
+    data: { page: 'config', preloadPriority: 1 },
     canActivate: [FocusOverlayOpenGuard],
   },
   {
@@ -63,13 +68,14 @@ export const APP_ROUTES: Routes = [
   },
   {
     path: 'tag/:id/tasks',
-    // eagerly loaded
+    component: TagTaskPageComponent, // Use eagerly loaded component
+    data: { page: 'tasks' },
     // component: TagTaskPageComponent,
-    loadComponent: () =>
-      import('./pages/tag-task-page/tag-task-page.component').then(
-        (m) => m.TagTaskPageComponent,
-      ),
-    data: { page: 'tag-tasks' },
+    // loadComponent: () =>
+    //   import('./pages/tag-task-page/tag-task-page.component').then(
+    //     (m) => m.TagTaskPageComponent,
+    //   ),
+    // data: { page: 'tag-tasks' },
     canActivate: [ValidTagIdGuard, FocusOverlayOpenGuard],
   },
   {

@@ -28,11 +28,11 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { ReminderModule } from './app/features/reminder/reminder.module';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
-  PreloadAllModules,
   provideRouter,
   withHashLocation,
   withPreloading,
 } from '@angular/router';
+import { OptimizedPreloadStrategy } from './app/core/optimized-preload-strategy';
 import { APP_ROUTES } from './app/app.routes';
 import { StoreModule } from '@ngrx/store';
 import { reducers } from './app/root-store';
@@ -173,7 +173,11 @@ bootstrapApplication(AppComponent, {
       useValue: { appearance: 'fill', subscriptSizing: 'dynamic' },
     },
     provideAnimations(),
-    provideRouter(APP_ROUTES, withHashLocation(), withPreloading(PreloadAllModules)),
+    provideRouter(
+    APP_ROUTES,
+    withHashLocation(),
+    withPreloading(OptimizedPreloadStrategy)
+  ),
     PLUGIN_INITIALIZER_PROVIDER,
     provideZonelessChangeDetection(),
   ],
