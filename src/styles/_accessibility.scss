@@ -1,0 +1,21 @@
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--palette-primary-500);
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+
+  &:focus {
+    top: 0;
+  }
+}
+
+// Ensure focus visibility
+*:focus-visible {
+  outline: 2px solid var(--palette-primary-500);
+  outline-offset: 2px;
+}
