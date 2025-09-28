@@ -62,7 +62,6 @@
         [label]="T.F.METRIC.EVAL_FORM.OBSTRUCTIONS | translate"
         [model]="metricForDay.obstructions"
         [suggestions]="obstructions$ | async"
-        [trackBy]="trackById"
       ></chip-list-input>
       <chip-list-input
         (addItem)="addImprovement($event)"
@@ -71,7 +70,6 @@
         [label]="T.F.METRIC.EVAL_FORM.IMPROVEMENTS | translate"
         [model]="metricForDay.improvements"
         [suggestions]="improvements$ | async"
-        [trackBy]="trackById"
       ></chip-list-input>
       <chip-list-input
         (addItem)="addImprovementTomorrow($event)"

@@ -18,7 +18,7 @@ import { T } from '../../../t.const';
 import { DialogAddNoteComponent } from '../../note/dialog-add-note/dialog-add-note.component';
 import { MatDialog } from '@angular/material/dialog';
 import { WorkContextService } from '../../work-context/work-context.service';
-import { DateService } from 'src/app/core/date/date.service';
+import { DateService } from '../../../core/date/date.service';
 import { HelpSectionComponent } from '../../../ui/help-section/help-section.component';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -57,25 +57,20 @@ import { TranslatePipe } from '@ngx-translate/core';
 })
 export class EvaluationSheetComponent implements OnDestroy, OnInit {
   // Inject services
-  private readonly obstructionService = inject(ObstructionService);
-  private readonly improvementService = inject(ImprovementService);
-  private readonly workContextService = inject(WorkContextService);
+  readonly obstructionService = inject(ObstructionService);
+  readonly improvementService = inject(ImprovementService);
+  readonly workContextService = inject(WorkContextService);
   private readonly _metricService = inject(MetricService);
   private readonly _matDialog = inject(MatDialog);
   private readonly _cd = inject(ChangeDetectorRef);
   private readonly _dateService = inject(DateService);
 
   // Memoized observables
-  readonly obstructions$ = this.obstructionService.obstructions$.pipe(
-    shareReplay(1)
-  );
-  readonly improvements$ = this.improvementService.improvements$.pipe(
-    shareReplay(1)
-  );
+  readonly obstructions$ = this.obstructionService.obstructions$.pipe(shareReplay(1));
+  readonly improvements$ = this.improvementService.improvements$.pipe(shareReplay(1));
 
   // Track by function for better performance
   trackById = (index: number, item: any): string => item?.id || index;
-
 
   readonly save = output<any>();
   T: typeof T = T;
@@ -200,12 +195,12 @@ export class EvaluationSheetComponent implements OnDestroy, OnInit {
 
   private _update(updateData: Partial<MetricCopy>): void {
     if (!this.metricForDay) return;
-    
+
     const updatedMetric = {
       ...this.metricForDay,
       ...updateData,
     };
-    
+
     // Only update if there are actual changes
     if (JSON.stringify(this.metricForDay) !== JSON.stringify(updatedMetric)) {
       this.metricForDay = updatedMetric;
