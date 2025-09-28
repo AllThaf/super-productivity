@@ -196,6 +196,7 @@ export class EvaluationSheetComponent implements OnDestroy, OnInit {
   private _update(updateData: Partial<MetricCopy>): void {
     if (!this.metricForDay) return;
 
+    const updateStart = performance.now();
     const updatedMetric = {
       ...this.metricForDay,
       ...updateData,
@@ -205,7 +206,10 @@ export class EvaluationSheetComponent implements OnDestroy, OnInit {
     if (JSON.stringify(this.metricForDay) !== JSON.stringify(updatedMetric)) {
       this.metricForDay = updatedMetric;
       this._metricService.upsertMetric(updatedMetric);
-      this._cd.markForCheck(); // Use markForCheck instead of detectChanges
+      this._cd.markForCheck(); // More efficient than detectChanges
+
+      const updateEnd = performance.now();
+      console.log(`Update operation took ${updateEnd - updateStart}ms`);
     }
   }
 }

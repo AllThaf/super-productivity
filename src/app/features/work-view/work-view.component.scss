@@ -2,6 +2,9 @@
 
 :host {
   overflow: hidden !important;
+  contain: layout style paint;
+  display: block;
+  min-height: 100vh;
 }
 
 add-task-bar {
@@ -22,6 +25,9 @@ h1 {
   position: relative;
   height: calc(100% - var(--header-height));
   overflow: hidden;
+  contain: layout style;
+  will-change: contents;
+  min-height: 200px;
 }
 
 h2 {
@@ -31,6 +37,9 @@ h2 {
 .task-list-viewport {
   height: 100%;
   width: 100%;
+  contain: strict;
+  transform: translateZ(0);
+  will-change: transform;
 
   &::ng-deep {
     .cdk-virtual-scroll-content-wrapper {

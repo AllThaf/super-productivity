@@ -11,6 +11,8 @@
 @import './styles/page';
 @import './styles/util';
 @import './styles/components/components';
+@import './styles/performance';
+@import './styles/layout-shift-prevention';
 
 * {
   //box-shadow: none !important;

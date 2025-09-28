@@ -1,0 +1,22 @@
+// High-performance animation classes
+.gpu-accelerated {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000;
+}
+
+// Use for elements that need layout calculations
+.content-shift {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  contain: layout style paint;
+}
+
+// Use for elements that animate frequently
+.animation-container {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  transition: transform var(--transition-duration-m) var(--ani-standard-timing),
+              opacity var(--transition-duration-m) var(--ani-standard-timing);
+}
