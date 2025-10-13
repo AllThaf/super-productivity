@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { MentionConfig, MentionModule } from '../../../ui/mentions';
+import { MentionConfig, MentionItem, MentionModule } from '../../../ui/mentions';
 import { MatInput } from '@angular/material/input';
 import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
@@ -69,6 +69,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ShortSyntaxTag, shortSyntaxToTags } from './short-syntax-to-tags';
 import { DEFAULT_PROJECT_COLOR } from '../../work-context/work-context.const';
 import { Log } from '../../../core/log';
+import { TODAY_TAG } from '../../tag/tag.const';
+import { BodyClass } from '../../../app.constants';
 
 @Component({
   selector: 'add-task-bar',
@@ -243,7 +245,7 @@ export class AddTaskBarComponent implements AfterViewInit, OnInit, OnDestroy {
       const mentions: Mentions[] = [];
       if (cfg.isEnableTag) {
         mentions.push({
-          items: tagSuggestions || [],
+          items: (tagSuggestions as unknown as MentionItem[]) || [],
           labelKey: 'title',
           triggerChar: '#',
         });
@@ -257,7 +259,7 @@ export class AddTaskBarComponent implements AfterViewInit, OnInit, OnDestroy {
       }
       if (cfg.isEnableProject) {
         mentions.push({
-          items: projectSuggestions || [],
+          items: (projectSuggestions as unknown as MentionItem[]) || [],
           labelKey: 'title',
           triggerChar: '+',
         });
@@ -281,9 +283,12 @@ export class AddTaskBarComponent implements AfterViewInit, OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._setProjectInitially();
+    this._setTagInitially();
     this._setupDefaultDate();
     this._setupTextParsing();
     this._setupSuggestions();
+
+    document.body.classList.add(BodyClass.isAddTaskBarOpen);
   }
 
   ngAfterViewInit(): void {
@@ -295,6 +300,7 @@ export class AddTaskBarComponent implements AfterViewInit, OnInit, OnDestroy {
   ngOnDestroy(): void {
     window.clearTimeout(this._focusTimeout);
     window.clearTimeout(this._autocompleteTimeout);
+    document.body.classList.remove(BodyClass.isAddTaskBarOpen);
   }
 
   // Setup methods
@@ -304,6 +310,23 @@ export class AddTaskBarComponent implements AfterViewInit, OnInit, OnDestroy {
       .subscribe((defaultProject) => {
         if (defaultProject) {
           this.stateService.updateProjectId(defaultProject.id);
+        }
+      });
+  }
+
+  private _setTagInitially(): void {
+    if (this.isNoDefaults()) {
+      return;
+    }
+
+    this._workContextService.activeWorkContext$
+      .pipe(first(), takeUntilDestroyed(this._destroyRef))
+      .subscribe((workContext) => {
+        if (
+          workContext?.type === WorkContextType.TAG &&
+          workContext.id !== TODAY_TAG.id
+        ) {
+          this.stateService.updateTagIds([workContext.id]);
         }
       });
   }
@@ -426,6 +449,10 @@ export class AddTaskBarComponent implements AfterViewInit, OnInit, OnDestroy {
       } else {
         taskData.dueDay = state.date;
       }
+    } else {
+      // Explicitly set dueDay to undefined when no date is selected
+      // This prevents automatic assignment of today's date in TODAY context
+      taskData.dueDay = undefined;
     }
 
     Log.x(taskData);

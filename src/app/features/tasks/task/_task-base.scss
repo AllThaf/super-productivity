@@ -176,11 +176,6 @@
   margin: var(--s) var(--s) var(--s) var(--s3);
   position: relative;
 
-  @include smallMainContainer {
-    margin: var(--s) var(--s) var(--s) var(--s3);
-    position: relative;
-  }
-
   @include mq(xs) {
     //margin: var(--s) var(--s2) var(--s) var(--s3);
     margin: var(--s) var(--s) var(--s) var(--s5);
@@ -234,8 +229,10 @@
   flex-grow: 1;
   flex-shrink: 1;
   flex-basis: 70%;
+  cursor: pointer;
   // we cannot do this since this cuts of the box shadow of the task edit
   //overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 
   @include mq(xs, max) {
     //margin-bottom: 5px;

@@ -2,8 +2,8 @@
 import {
   Component,
   computed,
+  DestroyRef,
   effect,
-  HostListener,
   inject,
   input,
   OnDestroy,
@@ -13,18 +13,20 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NavItemComponent } from './nav-item/nav-item.component';
-import { NavSectionComponent } from './nav-list/nav-list.component';
-import { NavGroupItem, NavItem, NavWorkContextItem } from './magic-side-nav.model';
+import { NavListTreeComponent } from './nav-list/nav-list-tree.component';
+import { NavItem } from './magic-side-nav.model';
 import { LS } from '../../core/persistence/storage-keys.const';
 import { MagicNavConfigService } from './magic-nav-config.service';
-import { readBoolLS, readNumberLSBounded } from '../../util/ls-util';
+import { lsSetItem, readBoolLS, readNumberLSBounded } from '../../util/ls-util';
 import { MatMenuModule } from '@angular/material/menu';
 import { NavMatMenuComponent } from './nav-mat-menu/nav-mat-menu.component';
 import { TaskService } from '../../features/tasks/task.service';
+import { LayoutService } from '../layout/layout.service';
+import { magicSideNavAnimations } from './magic-side-nav.animations';
 
 const COLLAPSED_WIDTH = 64;
+const MOBILE_NAV_WIDTH = 300;
 
 @Component({
   selector: 'magic-side-nav',
@@ -33,7 +35,7 @@ const COLLAPSED_WIDTH = 64;
     CommonModule,
     RouterModule,
     NavItemComponent,
-    NavSectionComponent,
+    NavListTreeComponent,
     MatMenuModule,
     NavMatMenuComponent,
   ],
@@ -44,10 +46,13 @@ const COLLAPSED_WIDTH = 64;
     '[class.animate]': 'animateWidth()',
     '[class.resizing]': 'isResizing()',
   },
+  animations: magicSideNavAnimations,
 })
 export class MagicSideNavComponent implements OnInit, OnDestroy {
+  private readonly _destroyRef = inject(DestroyRef);
   private readonly _sideNavConfigService = inject(MagicNavConfigService);
   private readonly _taskService = inject(TaskService);
+  private readonly _layoutService = inject(LayoutService);
   // Use service's computed signal directly
   readonly config = this._sideNavConfigService.navConfig;
 
@@ -65,7 +70,7 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
   private _animateTimeoutId: number | null = null;
 
   // Resize functionality
-  currentWidth = signal(260);
+  currentWidth = signal(MOBILE_NAV_WIDTH);
   // Use values directly from config for min/max/thresholds
   isResizing = signal(false);
   startX = signal(0);
@@ -73,7 +78,7 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
 
   // Computed values
   sidenavWidth = computed(() => {
-    if (this.isMobile()) return 260;
+    if (this.isMobile()) return MOBILE_NAV_WIDTH;
     if (!this.isFullMode()) return COLLAPSED_WIDTH;
     return this.currentWidth();
   });
@@ -96,6 +101,37 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
         this.mobileVisibleChange.emit(this.showMobileMenuOverlay());
       }
     });
+
+    effect(() => {
+      const isFullMode = this.isFullMode();
+      if (!this.isMobile()) {
+        lsSetItem(LS.NAV_SIDEBAR_EXPANDED, isFullMode.toString());
+      }
+    });
+
+    effect(() => {
+      const width = this.currentWidth();
+      if (!this.isMobile()) {
+        lsSetItem(LS.NAV_SIDEBAR_WIDTH, width.toString());
+      }
+    });
+
+    // Listen for focus trigger from LayoutService
+    effect(() => {
+      const trigger = this._layoutService.focusSideNavTrigger();
+      if (trigger > 0) {
+        // Small delay to ensure DOM is ready
+        window.setTimeout(() => {
+          this.focusFirstNavEntry();
+        });
+      }
+    });
+
+    const resizeListener = (): void => this._checkScreenSize();
+    window.addEventListener('resize', resizeListener);
+    this._destroyRef.onDestroy(() => {
+      window.removeEventListener('resize', resizeListener);
+    });
   }
 
   ngOnDestroy(): void {
@@ -106,27 +142,31 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Load saved fullMode/compactMode state or default to config value
-    const initialFullMode = readBoolLS(
-      LS.NAV_SIDEBAR_EXPANDED,
-      this.config().fullModeByDefault,
-    );
-    this.isFullMode.set(initialFullMode);
-
-    // Load saved width from localStorage or default
-    const bounded = readNumberLSBounded(
-      LS.NAV_SIDEBAR_WIDTH,
-      this.config().minWidth,
-      this.config().maxWidth,
-    );
-    this.currentWidth.set(bounded ?? this.config().defaultWidth);
-
+    // Check screen size first to set mobile state
     this._checkScreenSize();
-  }
 
-  @HostListener('window:resize')
-  onWindowResize(): void {
-    this._checkScreenSize();
+    // Persisted state is only relevant for desktop when bottom nav is not visible
+    const isBottomNavVisible = this._layoutService.isXs();
+    if (!isBottomNavVisible) {
+      // Load saved fullMode/compactMode state
+      const initialFullMode = readBoolLS(
+        LS.NAV_SIDEBAR_EXPANDED,
+        this.config().fullModeByDefault,
+      );
+      this.isFullMode.set(initialFullMode);
+
+      // Load saved width from localStorage or default
+      const bounded = readNumberLSBounded(
+        LS.NAV_SIDEBAR_WIDTH,
+        this.config().minWidth,
+        this.config().maxWidth,
+      );
+      this.currentWidth.set(bounded ?? this.config().defaultWidth);
+    } else {
+      // Use defaults for mobile; do not apply persisted desktop state
+      this.isFullMode.set(this.config().fullModeByDefault);
+      this.currentWidth.set(this.config().defaultWidth);
+    }
   }
 
   onNavKeyDown(event: KeyboardEvent): void {
@@ -139,15 +179,12 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
 
   private _checkScreenSize(): void {
     const wasMobile = this.isMobile();
-    const currentMobile = window.innerWidth < (this.config().mobileBreakpoint || 768);
+    const currentMobile = window.innerWidth < this.config().mobileBreakpoint;
     this.isMobile.set(currentMobile);
 
-    if (wasMobile !== currentMobile) {
-      if (currentMobile) {
-        this.showMobileMenuOverlay.set(false);
-      } else {
-        this.isFullMode.set(this.config().fullModeByDefault);
-      }
+    if (wasMobile !== currentMobile && currentMobile) {
+      // Switching to mobile - close overlay but preserve fullMode preference
+      this.showMobileMenuOverlay.set(false);
     }
   }
 
@@ -159,8 +196,6 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
     this._enableWidthAnimation();
     const newFullMode = !this.isFullMode();
     this.isFullMode.set(newFullMode);
-    // Save fullMode/compactMode state to localStorage
-    localStorage.setItem(LS.NAV_SIDEBAR_EXPANDED, newFullMode.toString());
   }
 
   isGroupExpanded(item: NavItem): boolean {
@@ -175,7 +210,7 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
   }
 
   onItemClick(item: NavItem): void {
-    if (item.type === 'group') {
+    if (item.type === 'tree') {
       // All groups now handled consistently through service
       if (item.action) {
         item.action();
@@ -199,22 +234,6 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
     }
   }
 
-  onDragDrop(
-    groupItem: NavGroupItem,
-    dropData: {
-      items: NavWorkContextItem[];
-      event: CdkDragDrop<string, string, NavWorkContextItem>;
-    },
-  ): void {
-    const { items, event } = dropData;
-
-    if (groupItem.id === 'projects') {
-      this._sideNavConfigService.handleProjectDrop(items, event);
-    } else if (groupItem.id === 'tags') {
-      this._sideNavConfigService.handleTagDrop(items, event);
-    }
-  }
-
   // Resize functionality
   onResizeStart(event: MouseEvent): void {
     if (!this.config().resizable || this.isMobile()) return;
@@ -235,9 +254,9 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
     if (!this.isResizing()) return;
 
     const deltaX =
-      this.config().position === 'right'
-        ? this.startX() - event.clientX
-        : event.clientX - this.startX();
+      // this.config().position === 'right'
+      //   ? this.startX() - event.clientX
+      event.clientX - this.startX();
 
     const potentialWidth = this.startWidth() + deltaX;
     const { collapseThreshold, expandThreshold, minWidth, maxWidth } = this.config();
@@ -258,7 +277,6 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
 
       // Normal resize when fullMode
       const newWidth = Math.max(minWidth, Math.min(maxWidth, potentialWidth));
-
       this.currentWidth.set(newWidth);
     } else {
       // Currently compactMode - check for fullMode threshold
@@ -289,10 +307,7 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
 
-    // Save width to localStorage (only save if fullMode)
-    if (this.isFullMode()) {
-      localStorage.setItem(LS.NAV_SIDEBAR_WIDTH, this.currentWidth().toString());
-    }
+    // Final width already persisted continuously; no-op here
   }
 
   private _enableWidthAnimation(): void {
@@ -424,6 +439,18 @@ export class MagicSideNavComponent implements OnInit, OnDestroy {
 
   // Public method to focus the first nav entry (for keyboard shortcuts)
   focusFirstNavEntry(): void {
+    if (this.isMobile() && !this.showMobileMenuOverlay()) {
+      this.showMobileMenuOverlay.set(true);
+      setTimeout(() => {
+        this._focusFirstNavElement();
+      });
+      return;
+    }
+
+    this._focusFirstNavElement();
+  }
+
+  private _focusFirstNavElement(): void {
     const focusableElements = this._getFocusableNavElements();
     if (focusableElements.length > 0) {
       focusableElements[0].focus();

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { IS_ELECTRON } from '../../app.constants';
 import { checkKeyCombo } from '../../util/check-key-combo';
-import { IsInputElement } from '../../util/dom-element';
+import { isInputElement } from '../../util/dom-element';
 import { GlobalConfigService } from '../../features/config/global-config.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LayoutService } from '../layout/layout.service';
@@ -18,6 +18,7 @@ import { SyncWrapperService } from '../../imex/sync/sync-wrapper.service';
 import { first, mapTo, switchMap } from 'rxjs/operators';
 import { fromEvent, merge, Observable, of } from 'rxjs';
 import { PluginBridgeService } from '../../plugins/plugin-bridge.service';
+import { TaskShortcutService } from '../../features/tasks/task-shortcut.service';
 
 @Injectable({
   providedIn: 'root',
@@ -34,6 +35,7 @@ export class ShortcutService {
   private _syncWrapperService = inject(SyncWrapperService);
   private _store = inject(Store);
   private _pluginBridgeService = inject(PluginBridgeService);
+  private _taskShortcutService = inject(TaskShortcutService);
 
   isCtrlPressed$: Observable<boolean> = fromEvent(document, 'keydown').pipe(
     switchMap((ev: Event) => {
@@ -83,7 +85,7 @@ export class ShortcutService {
     const el = ev.target as HTMLElement;
 
     // Skip handling if no special keys are used and inside input elements
-    if (!ev.metaKey && IsInputElement(el)) return;
+    if (!ev.metaKey && isInputElement(el)) return;
 
     if (
       checkKeyCombo(ev, keys.toggleBacklog) &&
@@ -176,6 +178,11 @@ export class ShortcutService {
       }
     }
 
+    // Handle task-specific shortcuts
+    if (this._taskShortcutService.handleTaskShortcuts(ev)) {
+      return;
+    }
+
     // Check plugin shortcuts (exec last)
     const pluginShortcuts = this._pluginBridgeService.shortcuts();
     for (const shortcut of pluginShortcuts) {
@@ -190,35 +197,6 @@ export class ShortcutService {
   }
 
   private _focusSideNav(): void {
-    console.log('FocusSideNav called');
-
-    // Very simple approach - just find the first nav-link and focus it
-    const firstNavLink = document.querySelector('.nav-sidebar .nav-link') as HTMLElement;
-    console.log('First nav link found:', !!firstNavLink, firstNavLink);
-
-    if (firstNavLink) {
-      // Make sure it's focusable
-      firstNavLink.setAttribute('tabindex', '0');
-
-      // Focus with a small delay to ensure DOM is ready
-      setTimeout(() => {
-        firstNavLink.focus();
-        console.log('Focused element. Active element is now:', document.activeElement);
-        console.log('Focus successful:', document.activeElement === firstNavLink);
-      }, 10);
-    } else {
-      // Fallback: try to focus the toggle button
-      const toggleBtn = document.querySelector(
-        '.nav-sidebar .sidebar-toggle',
-      ) as HTMLElement;
-      console.log('Toggle button found:', !!toggleBtn, toggleBtn);
-      if (toggleBtn) {
-        toggleBtn.setAttribute('tabindex', '0');
-        setTimeout(() => {
-          toggleBtn.focus();
-          console.log('Focused toggle. Active element is now:', document.activeElement);
-        }, 10);
-      }
-    }
+    this._layoutService.focusSideNav();
   }
 }

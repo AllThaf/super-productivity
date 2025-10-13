@@ -846,6 +846,25 @@
         "UPDATED": "Updated project settings"
       }
     },
+    "PROJECT_FOLDER": {
+      "DIALOG": {
+        "CREATE_TITLE": "Create folder",
+        "EDIT_TITLE": "Edit folder",
+        "NAME_LABEL": "Folder name",
+        "NAME_PLACEHOLDER": "Enter folder name",
+        "NAME_REQUIRED": "Folder name is required",
+        "PARENT_LABEL": "Parent folder",
+        "NO_PARENT": "No parent (root level)"
+      },
+      "SELECT": {
+        "LABEL": "Folder",
+        "PLACEHOLDER": "Select folder",
+        "NO_PARENT": "No folder (root level)"
+      },
+      "CONFIRM_DELETE": "Are you sure you want to delete the folder \"{{title}}\"? All projects in this folder will be moved to the root level.",
+      "TOOLTIP_CREATE": "Create project folder",
+      "TOOLTIP_VISIBILITY": "Show/hide projects"
+    },
     "QUICK_HISTORY": {
       "NO_DATA": "No data for current year",
       "PAGE_TITLE": "Quick History",
@@ -1357,6 +1376,10 @@
         "MSG": "Removing the repeat config will convert all previous instances of this task to just regular tasks. Are you sure you want to proceed",
         "OK": "Remove completely"
       },
+      "D_DELETE_INSTANCE": {
+        "MSG": "Remove the repeat task instance on {{date}}? This will prevent the task from being created on this date only.",
+        "OK": "Remove Instance"
+      },
       "D_CONFIRM_UPDATE_INSTANCES": {
         "CANCEL": "Only future tasks",
         "MSG": "There are {{tasksNr}} instances created for this repeatable task. Do you want to update all of them with the new defaults or just future tasks?",
@@ -1406,6 +1429,8 @@
         "WEDNESDAY": "Wednesday",
         "INHERIT_SUBTASKS": "Inherit subtasks",
         "INHERIT_SUBTASKS_DESCRIPTION": "When enabled, subtasks from the most recent task instance will be recreated with the repeating task",
+        "REMOVE_INSTANCE": "Remove today",
+        "REMOVE_FOR_DATE": "Remove for {{date}}",
         "DISABLE_AUTO_UPDATE_SUBTASKS": "Disable auto-updating subtasks",
         "DISABLE_AUTO_UPDATE_SUBTASKS_DESCRIPTION": "Do not update inherited subtasks automatically when the newest instance changes"
       }
@@ -1574,6 +1599,7 @@
     "DELETE": "Delete",
     "DISMISS": "Dismiss",
     "DO_IT": "Do it!",
+    "DONT_SHOW_AGAIN": "Don't show again",
     "DURATION_DESCRIPTION": "e.g. \"5h 23m\" which results in 5 hours and 23 minutes",
     "EDIT": "Edit",
     "ENABLED": "Enabled",
@@ -1752,11 +1778,11 @@
       "IS_HIDE_NAV": "Hide navigation until main header is hovered (desktop only)",
       "IS_MINIMIZE_TO_TRAY": "Minimize to tray (desktop only)",
       "IS_SHOW_TIP_LONGER": "Show productivity tip on app start a little longer",
+      "IS_DISABLE_PRODUCTIVITY_TIPS": "Disable productivity tips on app start",
       "IS_TRAY_SHOW_CURRENT_COUNTDOWN": "Show current countdown in the tray / status menu (desktop mac only)",
       "IS_TRAY_SHOW_CURRENT_TASK": "Show current task in the tray / status menu (desktop mac/windows only)",
       "IS_OVERLAY_INDICATOR_ENABLED": "Enable overlay indicator window (desktop linux/gnome)",
       "IS_TURN_OFF_MARKDOWN": "Turn off markdown parsing for task notes",
-      "IS_USE_MINIMAL_SIDE_NAV": "Use minimal navigation bar (show only icons)",
       "START_OF_NEXT_DAY": "Start time of the next day",
       "START_OF_NEXT_DAY_HINT": "from when (in hour) you want to count the next day has started. default is midnight which is 0.",
       "TASK_NOTES_TPL": "Task description template",

@@ -75,7 +75,7 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { getDbDateStr } from '../../../util/get-db-date-str';
 import { isMarkdownChecklist } from '../../markdown-checklist/is-markdown-checklist';
 import { Log } from '../../../core/log';
-import { IsInputElement } from '../../../util/dom-element';
+import { isInputElement } from '../../../util/dom-element';
 
 @Component({
   selector: 'task-detail-panel',
@@ -148,7 +148,7 @@ export class TaskDetailPanelComponent implements OnInit, AfterViewInit, OnDestro
   onKeydown(ev: KeyboardEvent): void {
     // Skip handling inside input elements
     const target = ev.target as HTMLElement;
-    if (IsInputElement(target)) return;
+    if (isInputElement(target)) return;
 
     const cfg = this._globalConfigService.cfg();
     if (!cfg) throw new Error('No config service available');
@@ -298,7 +298,7 @@ export class TaskDetailPanelComponent implements OnInit, AfterViewInit, OnDestro
   });
 
   isSubTaskPanelExpandedInitially = computed(() => {
-    return this.layoutService.isRightPanelOver() || this.isDialogMode();
+    return this.isDialogMode();
   });
 
   showTimeEstimate = computed(() => !this.task().subTasks?.length);
@@ -456,6 +456,7 @@ export class TaskDetailPanelComponent implements OnInit, AfterViewInit, OnDestro
       restoreFocus: true,
       data: {
         task: this.task(),
+        targetDate: this.task().dueDay || getDbDateStr(new Date(this.task().created)),
       },
     });
   }
@@ -483,7 +484,10 @@ export class TaskDetailPanelComponent implements OnInit, AfterViewInit, OnDestro
   collapseParent(): void {
     if (!this.isDialogMode()) {
       this.taskService.setSelectedId(null);
-      this.taskService.focusTaskIfPossible(this.task().id);
+      // NOTE: we delay for a frame to avoid problems with the global task keyboard shortcut handler
+      window.setTimeout(() => {
+        this.taskService.focusTaskIfPossible(this.task().id);
+      });
     }
   }
 

@@ -28,7 +28,6 @@ import {
   expandInOnlyAnimation,
 } from '../../../ui/animations/expand.ani';
 import { GlobalConfigService } from '../../config/global-config.service';
-import { checkKeyCombo } from '../../../util/check-key-combo';
 import {
   concatMap,
   distinctUntilChanged,
@@ -88,6 +87,8 @@ import { environment } from '../../../../environments/environment';
 import { TODAY_TAG } from '../../tag/tag.const';
 import { GlobalTrackingIntervalService } from '../../../core/global-tracking-interval/global-tracking-interval.service';
 import { TaskLog } from '../../../core/log';
+import { LayoutService } from '../../../core-ui/layout/layout.service';
+import { TaskFocusService } from '../task-focus.service';
 
 @Component({
   selector: 'task',
@@ -141,7 +142,9 @@ export class TaskComponent implements OnDestroy, AfterViewInit {
   private readonly _store = inject(Store);
   private readonly _projectService = inject(ProjectService);
   private readonly _globalTrackingIntervalService = inject(GlobalTrackingIntervalService);
+  private readonly _taskFocusService = inject(TaskFocusService);
   readonly workContextService = inject(WorkContextService);
+  readonly layoutService = inject(LayoutService);
 
   task = input.required<TaskWithSubTasks>();
   isBacklog = input<boolean>(false);
@@ -263,8 +266,14 @@ export class TaskComponent implements OnDestroy, AfterViewInit {
   private _isTaskDeleteTriggered = false;
 
   // methods come last
-  @HostListener('keydown', ['$event']) onKeyDown(ev: KeyboardEvent): void {
-    this._handleKeyboardShortcuts(ev);
+
+  @HostListener('focus') onFocus(): void {
+    this._taskFocusService.focusedTaskId.set(this.task().id);
+    this._taskFocusService.lastFocusedTaskComponent.set(this);
+  }
+
+  @HostListener('blur') onBlur(): void {
+    this._taskFocusService.focusedTaskId.set(null);
   }
 
   @HostListener('dragenter', ['$event']) onDragEnter(ev: DragEvent): void {
@@ -349,6 +358,7 @@ export class TaskComponent implements OnDestroy, AfterViewInit {
       .open(DialogEditTaskRepeatCfgComponent, {
         data: {
           task: this.task(),
+          targetDate: this.task().dueDay || getDbDateStr(new Date(this.task().created)),
         },
       })
       .afterClosed()
@@ -377,6 +387,95 @@ export class TaskComponent implements OnDestroy, AfterViewInit {
 
   pauseTask(): void {
     this._taskService.pauseCurrent();
+  }
+
+  togglePlayPause(): void {
+    if (this.isCurrent()) {
+      this.pauseTask();
+    } else {
+      this.startTask();
+    }
+  }
+
+  moveTaskUp(): void {
+    const t = this.task();
+    this._taskService.moveUp(t.id, t.parentId, this.isBacklog());
+    // timeout required to let changes take place
+    setTimeout(() => this.focusSelf());
+    setTimeout(() => this.focusSelf(), 10);
+  }
+
+  moveTaskDown(): void {
+    const t = this.task();
+    this._taskService.moveDown(t.id, t.parentId, this.isBacklog());
+    setTimeout(() => this.focusSelf());
+    setTimeout(() => this.focusSelf(), 10);
+  }
+
+  moveTaskToTop(): void {
+    const t = this.task();
+    this._taskService.moveToTop(t.id, t.parentId, this.isBacklog());
+    setTimeout(() => this.focusSelf());
+    setTimeout(() => this.focusSelf(), 10);
+  }
+
+  moveTaskToBottom(): void {
+    const t = this.task();
+    this._taskService.moveToBottom(t.id, t.parentId, this.isBacklog());
+    setTimeout(() => this.focusSelf());
+    setTimeout(() => this.focusSelf(), 10);
+  }
+
+  handleArrowLeft(): void {
+    const t = this.task();
+    const hasSubTasks = t.subTasks && t.subTasks.length > 0;
+
+    if (this.isSelected()) {
+      this.hideDetailPanel();
+    } else if (hasSubTasks && t._hideSubTasksMode !== HideSubTasksMode.HideAll) {
+      this._taskService.toggleSubTaskMode(t.id, true, false);
+    } else {
+      this.focusPrevious();
+    }
+  }
+
+  handleArrowRight(): void {
+    const t = this.task();
+    const hasSubTasks = t.subTasks && t.subTasks.length > 0;
+
+    if (hasSubTasks && t._hideSubTasksMode !== undefined) {
+      this._taskService.toggleSubTaskMode(t.id, false, false);
+    } else if (!this.isSelected()) {
+      this.showDetailPanel();
+    } else {
+      this.focusNext();
+    }
+  }
+
+  moveToBacklogWithFocus(): void {
+    const t = this.task();
+    if (t.projectId && !t.parentId) {
+      this.focusPrevious(true);
+      this.moveToBacklog();
+    }
+  }
+
+  moveToTodayWithFocus(): void {
+    const t = this.task();
+    if (t.projectId) {
+      this.focusNext(true, true);
+      this.moveToToday();
+    }
+  }
+
+  openProjectMenu(): void {
+    const t = this.task();
+    if (!t.parentId) {
+      const projectMenuTrigger = this.projectMenuTrigger();
+      if (projectMenuTrigger) {
+        projectMenuTrigger.openMenu();
+      }
+    }
   }
 
   updateTaskTitleIfChanged({
@@ -534,6 +633,19 @@ export class TaskComponent implements OnDestroy, AfterViewInit {
         reminderId: this.task().reminderId,
       }),
     );
+  }
+
+  titleBarClick(event: MouseEvent): void {
+    console.log(event.target);
+    if (
+      (IS_TOUCH_PRIMARY && this.task().title.length) ||
+      (event.target as HTMLElement).tagName.toUpperCase() !== 'TEXTAREA'
+      // && (event.target as HTMLElement).tagName.toUpperCase() !== 'TASK-TITLE')
+    ) {
+      this.toggleShowDetailPanel(event);
+    } else {
+      this.focusTitleForEdit();
+    }
   }
 
   focusPrevious(isFocusReverseIfNotPossible: boolean = false): void {
@@ -929,176 +1041,6 @@ export class TaskComponent implements OnDestroy, AfterViewInit {
       return {} as KeyboardConfig;
     }
     return (this._configService.cfg()?.keyboard as KeyboardConfig) || {};
-  }
-
-  private _handleKeyboardShortcuts(ev: KeyboardEvent): void {
-    if (ev.target !== this._elementRef.nativeElement) {
-      return;
-    }
-
-    const t = this.task();
-    const cfg = this._configService.cfg();
-    if (!cfg) {
-      throw new Error();
-    }
-    const keys = cfg.keyboard;
-    const isShiftOrCtrlPressed = ev.shiftKey || ev.ctrlKey;
-
-    if (checkKeyCombo(ev, keys.taskEditTitle) || ev.key === 'Enter') {
-      this.focusTitleForEdit();
-      // prevent blur
-      ev.preventDefault();
-    }
-    if (checkKeyCombo(ev, keys.taskToggleDetailPanelOpen)) {
-      this.toggleShowDetailPanel();
-    }
-    if (checkKeyCombo(ev, keys.taskOpenEstimationDialog)) {
-      this.estimateTime();
-    }
-    if (checkKeyCombo(ev, keys.taskSchedule)) {
-      this.scheduleTask();
-    }
-    if (checkKeyCombo(ev, keys.taskToggleDone)) {
-      this.toggleDoneKeyboard();
-    }
-    if (checkKeyCombo(ev, keys.taskAddSubTask)) {
-      this.addSubTask();
-    }
-    if (checkKeyCombo(ev, keys.taskAddAttachment)) {
-      this.addAttachment();
-    }
-    if (!t.parentId && checkKeyCombo(ev, keys.taskMoveToProject)) {
-      const projectMenuTrigger = this.projectMenuTrigger();
-      if (!projectMenuTrigger) {
-        throw new Error('No el');
-      }
-      projectMenuTrigger.openMenu();
-    }
-    if (checkKeyCombo(ev, keys.taskOpenContextMenu)) {
-      const taskContextMenu = this.taskContextMenu();
-      if (!taskContextMenu) {
-        throw new Error('No el');
-      }
-      taskContextMenu.open(ev, true);
-    }
-
-    if (checkKeyCombo(ev, keys.togglePlay)) {
-      if (this.isCurrent()) {
-        this.pauseTask();
-      } else {
-        this.startTask();
-      }
-    }
-    if (checkKeyCombo(ev, keys.taskEditTags)) {
-      this.editTags();
-    }
-    if (checkKeyCombo(ev, keys.taskDelete)) {
-      this.deleteTask();
-    }
-
-    if (checkKeyCombo(ev, keys.moveToBacklog) && t.projectId) {
-      if (!t.parentId) {
-        ev.preventDefault();
-        // same default shortcut as schedule so we stop propagation
-        ev.stopPropagation();
-        this.focusPrevious(true);
-        this.moveToBacklog();
-      }
-    }
-
-    if (checkKeyCombo(ev, keys.moveToTodaysTasks) && t.projectId) {
-      ev.preventDefault();
-      // same default shortcut as schedule so we stop propagation
-      ev.stopPropagation();
-      this.focusNext(true, true);
-      this.moveToToday();
-    }
-
-    // collapse sub tasks
-    if (ev.key === 'ArrowLeft' || checkKeyCombo(ev, keys.collapseSubTasks)) {
-      const hasSubTasks = t.subTasks && t.subTasks.length > 0;
-      if (this.isSelected()) {
-        this.hideDetailPanel();
-      } else if (hasSubTasks && t._hideSubTasksMode !== HideSubTasksMode.HideAll) {
-        this._taskService.toggleSubTaskMode(t.id, true, false);
-        // TODO find a solution
-        // } else if (this.task.parentId) {
-        // this._taskService.focusTask(this.task.parentId);
-      } else {
-        this.focusPrevious();
-      }
-    }
-
-    // expand sub tasks
-    if (ev.key === 'ArrowRight' || checkKeyCombo(ev, keys.expandSubTasks)) {
-      const hasSubTasks = t.subTasks && t.subTasks.length > 0;
-      if (hasSubTasks && t._hideSubTasksMode !== undefined) {
-        this._taskService.toggleSubTaskMode(t.id, false, false);
-      } else if (!this.isSelected()) {
-        this.showDetailPanel();
-      } else {
-        this.focusNext();
-      }
-    }
-
-    // moving items
-    // move task up
-    if (checkKeyCombo(ev, keys.moveTaskUp)) {
-      this._taskService.moveUp(t.id, t.parentId, this.isBacklog());
-      ev.stopPropagation();
-      ev.preventDefault();
-      // timeout required to let changes take place @TODO hacky
-      setTimeout(this.focusSelf.bind(this));
-      setTimeout(this.focusSelf.bind(this), 10);
-      return;
-    }
-
-    if (checkKeyCombo(ev, keys.moveTaskDown)) {
-      this._taskService.moveDown(t.id, t.parentId, this.isBacklog());
-      // timeout required to let changes take place @TODO hacky
-      setTimeout(this.focusSelf.bind(this));
-      setTimeout(this.focusSelf.bind(this), 10);
-      ev.stopPropagation();
-      ev.preventDefault();
-      return;
-    }
-
-    if (checkKeyCombo(ev, keys.moveTaskToTop)) {
-      this._taskService.moveToTop(t.id, t.parentId, this.isBacklog());
-      ev.stopPropagation();
-      ev.preventDefault();
-      // timeout required to let changes take place @TODO hacky
-      setTimeout(this.focusSelf.bind(this));
-      setTimeout(this.focusSelf.bind(this), 10);
-      return;
-    }
-
-    if (checkKeyCombo(ev, keys.moveTaskToBottom)) {
-      this._taskService.moveToBottom(t.id, t.parentId, this.isBacklog());
-      ev.stopPropagation();
-      ev.preventDefault();
-      // timeout required to let changes take place @TODO hacky
-      setTimeout(this.focusSelf.bind(this));
-      setTimeout(this.focusSelf.bind(this), 10);
-      return;
-    }
-
-    // move focus up
-    if (
-      (!isShiftOrCtrlPressed && ev.key === 'ArrowUp') ||
-      checkKeyCombo(ev, keys.selectPreviousTask)
-    ) {
-      ev.preventDefault();
-      this.focusPrevious();
-    }
-    // move focus down
-    if (
-      (!isShiftOrCtrlPressed && ev.key === 'ArrowDown') ||
-      checkKeyCombo(ev, keys.selectNextTask)
-    ) {
-      ev.preventDefault();
-      this.focusNext();
-    }
   }
 
   protected readonly ICAL_TYPE = ICAL_TYPE;

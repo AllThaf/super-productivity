@@ -1,6 +1,14 @@
 /* eslint-disable */
-import { ChangeDetectionStrategy, Component, inject, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  computed,
+  OnInit,
+  AfterViewInit,
+} from '@angular/core';
 import { fromEvent } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { select, Store } from '@ngrx/store';
 import { selectTimelineTasks } from '../../work-context/store/work-context.selectors';
 import { selectPlannerDayMap } from '../../planner/store/planner.selectors';
@@ -22,7 +30,6 @@ import { mapToScheduleDays } from '../map-schedule-data/map-to-schedule-days';
 import { mapScheduleDaysToScheduleEvents } from '../map-schedule-data/map-schedule-days-to-schedule-events';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIcon } from '@angular/material/icon';
-import { MatFabButton } from '@angular/material/button';
 import { selectTaskRepeatCfgsWithAndWithoutStartTime } from '../../task-repeat-cfg/store/task-repeat-cfg.selectors';
 import { ScheduleWeekComponent } from '../schedule-week/schedule-week.component';
 import { ScheduleMonthComponent } from '../schedule-month/schedule-month.component';
@@ -30,13 +37,7 @@ import { ScheduleService } from '../schedule.service';
 
 @Component({
   selector: 'schedule',
-  imports: [
-    LocaleDatePipe,
-    ScheduleWeekComponent,
-    ScheduleMonthComponent,
-    MatIcon,
-    MatFabButton,
-  ],
+  imports: [LocaleDatePipe, ScheduleWeekComponent, ScheduleMonthComponent, MatIcon],
   templateUrl: './schedule.component.html',
   styleUrl: './schedule.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,7 +47,7 @@ import { ScheduleService } from '../schedule.service';
     '[style.--nr-of-days]': 'daysToShow().length',
   },
 })
-export class ScheduleComponent {
+export class ScheduleComponent implements AfterViewInit {
   taskService = inject(TaskService);
   layoutService = inject(LayoutService);
   scheduleService = inject(ScheduleService);
@@ -54,9 +55,10 @@ export class ScheduleComponent {
   private _calendarIntegrationService = inject(CalendarIntegrationService);
   private _store = inject(Store);
   private _globalTrackingIntervalService = inject(GlobalTrackingIntervalService);
+  private _route = inject(ActivatedRoute);
 
-  private _selectedTimeView = computed(() => this.layoutService.selectedTimeView());
-  isMonthView = computed(() => this._selectedTimeView() === 'month');
+  private _currentTimeViewMode = computed(() => this.layoutService.selectedTimeView());
+  isMonthView = computed(() => this._currentTimeViewMode() === 'month');
 
   private _todayDateStr = toSignal(this._globalTrackingIntervalService.todayDateStr$);
   private _windowSize = toSignal(
@@ -70,7 +72,7 @@ export class ScheduleComponent {
 
   private _daysToShowCount = computed(() => {
     const size = this._windowSize();
-    const selectedView = this._selectedTimeView();
+    const selectedView = this._currentTimeViewMode();
     const width = size.width;
     const height = size.height;
 
@@ -103,7 +105,7 @@ export class ScheduleComponent {
 
   daysToShow = computed(() => {
     const count = this._daysToShowCount();
-    const selectedView = this._selectedTimeView();
+    const selectedView = this._currentTimeViewMode();
     // Trigger re-computation when today changes
     this._todayDateStr();
 
@@ -206,5 +208,15 @@ export class ScheduleComponent {
         data: { isInfoShownInitially: true },
       });
     }
+  }
+
+  ngAfterViewInit(): void {
+    // Handle fragment scrolling manually as a fallback
+    setTimeout(() => {
+      const element = document.getElementById('work-start');
+      if (element) {
+        element.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }
+    }); // Small delay to ensure DOM is fully rendered
   }
 }

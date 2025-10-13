@@ -25,6 +25,7 @@ import { FormlyConfigModule } from './app/ui/formly-config.module';
 import { markedOptionsFactory } from './app/ui/marked-options-factory';
 import { MaterialCssVarsModule } from 'angular-material-css-vars';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { ReminderModule } from './app/features/reminder/reminder.module';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import {
@@ -35,7 +36,6 @@ import {
 } from '@angular/router';
 import { APP_ROUTES } from './app/app.routes';
 import { StoreModule } from '@ngrx/store';
-import { reducers } from './app/root-store';
 import { undoTaskDeleteMetaReducer } from './app/root-store/meta/undo-task-delete.meta-reducer';
 import { actionLoggerReducer } from './app/root-store/meta/action-logger.reducer';
 import {
@@ -51,10 +51,10 @@ import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import {
-  TranslateHttpLoader,
   TRANSLATE_HTTP_LOADER_CONFIG,
+  TranslateHttpLoader,
 } from '@ngx-translate/http-loader';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { AppComponent } from './app/app.component';
@@ -95,12 +95,13 @@ bootstrapApplication(AppComponent, {
       }),
       MaterialCssVarsModule.forRoot(),
       MatSidenavModule,
+      MatBottomSheetModule,
       ReminderModule,
       MaterialCssVarsModule.forRoot(),
       // External
       BrowserModule,
       // NOTE: both need to be present to use forFeature stores
-      StoreModule.forRoot(reducers, {
+      StoreModule.forRoot(undefined, {
         metaReducers: [
           undoTaskDeleteMetaReducer,
           taskSharedCrudMetaReducer,
@@ -190,7 +191,7 @@ bootstrapApplication(AppComponent, {
     !IS_ANDROID_WEB_VIEW
   ) {
     Log.log('Registering Service worker');
-    return navigator.serviceWorker.register('ngsw-worker.js').catch((err: any) => {
+    return navigator.serviceWorker.register('ngsw-worker.js').catch((err: unknown) => {
       Log.log('Service Worker Registration Error');
       Log.err(err);
     });

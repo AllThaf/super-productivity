@@ -1,4 +1,4 @@
-import * as windowStateKeeper from 'electron-window-state';
+import windowStateKeeper from 'electron-window-state';
 import {
   App,
   BrowserWindow,
@@ -19,9 +19,9 @@ import { error, log } from 'electron-log/main';
 import { GlobalConfigState } from '../src/app/features/config/global-config.model';
 import { IS_MAC } from './common.const';
 import {
-  showOverlayWindow,
-  hideOverlayWindow,
   destroyOverlayWindow,
+  hideOverlayWindow,
+  showOverlayWindow,
 } from './overlay-indicator/overlay-indicator';
 
 let mainWin: BrowserWindow;
@@ -119,7 +119,9 @@ export const createWindow = ({
 
     // NOTE this is needed for GitHub api requests to work :(
     // office365 needs a User-Agent as well (#4677)
-    if (!details.url.includes('github.com') && !details.url.includes('office365.com')) {
+    if (
+      new URL(details.url).hostname in ['github.com', 'office365.com', 'outlook.live.com']
+    ) {
       removeKeyInAnyCase(requestHeaders, 'User-Agent');
     }
     callback({ requestHeaders });
@@ -157,7 +159,12 @@ export const createWindow = ({
       } else {
         log('Loading custom styles from ' + CSS_FILE_PATH);
         const styles = readFileSync(CSS_FILE_PATH, { encoding: 'utf8' });
-        mainWin.webContents.insertCSS(styles).then(log).catch(error);
+        try {
+          mainWin.webContents.insertCSS(styles);
+          log('Custom styles loaded successfully');
+        } catch (cssError) {
+          error('Failed to load custom styles:', cssError);
+        }
       }
     });
   });
@@ -356,7 +363,7 @@ const appMinimizeHandler = (app: App): void => {
           // For regular minimize (not to tray), also show overlay
           showOverlayWindow();
           if (IS_MAC) {
-            app.dock.show();
+            app.dock?.show();
           }
         }
       });
@@ -364,26 +371,37 @@ const appMinimizeHandler = (app: App): void => {
   }
 };
 
-const upsertKeyValue = <T>(obj: T, keyToChange: string, value: string[]): T => {
+const upsertKeyValue = <T extends Record<string, any> | undefined>(
+  obj: T,
+  keyToChange: string,
+  value: string[],
+): T => {
+  if (!obj) return obj;
   const keyToChangeLower = keyToChange.toLowerCase();
   for (const key of Object.keys(obj)) {
     if (key.toLowerCase() === keyToChangeLower) {
       // Reassign old key
-      obj[key] = value;
+      (obj as any)[key] = value;
       // Done
-      return;
+      return obj;
     }
   }
   // Insert at end instead
-  obj[keyToChange] = value;
+  (obj as any)[keyToChange] = value;
+  return obj;
 };
 
-const removeKeyInAnyCase = <T>(obj: T, keyToRemove: string): T => {
+const removeKeyInAnyCase = <T extends Record<string, any> | undefined>(
+  obj: T,
+  keyToRemove: string,
+): T => {
+  if (!obj) return obj;
   const keyToRemoveLower = keyToRemove.toLowerCase();
   for (const key of Object.keys(obj)) {
     if (key.toLowerCase() === keyToRemoveLower) {
-      delete obj[key];
-      return;
+      delete (obj as any)[key];
+      return obj;
     }
   }
+  return obj;
 };

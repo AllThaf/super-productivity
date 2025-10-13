@@ -101,7 +101,8 @@ export const focusModeReducer = createReducer(
   })),
 
   on(a.startFocusSession, (state, { duration }) => {
-    const timer = createWorkTimer(duration || FOCUS_MODE_DEFAULTS.SESSION_DURATION);
+    // important to use 0 for flowtime
+    const timer = createWorkTimer(duration ?? FOCUS_MODE_DEFAULTS.SESSION_DURATION);
     return {
       ...state,
       timer,
@@ -121,7 +122,7 @@ export const focusModeReducer = createReducer(
     };
   }),
 
-  on(a.unPauseFocusSession, (state, { idleTime = 0 }) => {
+  on(a.unPauseFocusSession, (state) => {
     if (state.timer.purpose !== 'work') return state;
 
     return {
@@ -129,7 +130,7 @@ export const focusModeReducer = createReducer(
       timer: {
         ...state.timer,
         isRunning: true,
-        startedAt: Date.now() - state.timer.elapsed - idleTime,
+        startedAt: Date.now() - state.timer.elapsed,
       },
     };
   }),

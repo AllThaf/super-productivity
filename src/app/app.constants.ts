@@ -119,11 +119,7 @@ export enum BodyClass {
 
   isAndroidKeyboardShown = 'isAndroidKeyboardShown',
   isAndroidKeyboardHidden = 'isAndroidKeyboardHidden',
-}
-
-export enum MainContainerClass {
-  isSmallMainContainer = 'isSmallMainContainer',
-  isVerySmallMainContainer = 'isVerySmallMainContainer',
+  isAddTaskBarOpen = 'isAddTaskBarOpen',
 }
 
 export enum HelperClasses {

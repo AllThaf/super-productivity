@@ -1,0 +1,309 @@
+/**
+ * Seventeen Theme for Super Productivity
+ * Light theme inspired by Seventeen's soft pastel colors
+ * Clean, minimal, with enhanced accessibility
+ */
+
+/* Remove all shadows for minimal aesthetic */
+* {
+  box-shadow: none !important;
+}
+
+/* Smooth transitions */
+:root {
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+}
+
+/* Seventeen theme variables (Light theme) */
+body:not(.isDarkTheme) {
+  /* ===============================
+   * SEVENTEEN COLOR PALETTE
+   * ===============================*/
+
+  /* Main Colors from palette */
+  --svt-pink: #ffc0cb;        /* Light pink */
+  --svt-white: #ffffff;       /* Pure white */
+  --svt-light-blue: #b6d7ff;  /* Light blue */
+  --svt-blue: #7fb3d3;       /* Medium blue */
+  --svt-dark-blue: #5b9bd5;  /* Darker blue */
+
+  /* Extended palette for UI needs */
+  --svt-pink-light: #ffe4e6;
+  --svt-pink-lighter: #fff0f1;
+  --svt-blue-darker: #4a90c2;
+  --svt-blue-darkest: #2c5282;
+  --svt-gray-light: #f8f9fa;
+  --svt-gray: #e2e8f0;
+  --svt-gray-medium: #a0aec0;
+  --svt-gray-dark: #4a5568;
+
+  /* ===============================
+   * BACKGROUND COLORS
+   * ===============================*/
+
+  /* Main backgrounds */
+  --bg: var(--svt-white);
+  --bg-darker: var(--svt-gray-light);
+  --bg-slightly-lighter: var(--svt-white);
+  --bg-lighter: var(--svt-white);
+  --bg-lightest: var(--svt-white);
+  --bg-super-light: var(--svt-white);
+
+  /* Component backgrounds */
+  --card-bg: var(--svt-white);
+  --sidenav-bg: var(--svt-pink-lighter);
+  --selected-task-bg-color: var(--svt-pink-light);
+  --banner-bg: var(--svt-pink-light);
+
+  /* Task backgrounds with soft hierarchy */
+  --task-c-bg: var(--svt-white);
+  --task-c-selected-bg: var(--svt-pink-light);
+  --sub-task-c-bg: var(--svt-gray-light);
+  --sub-task-c-bg-done: var(--svt-light-blue);
+  --task-c-bg-done: var(--svt-light-blue);
+  --task-c-current-bg: var(--svt-pink-light);
+  --task-c-drag-drop-bg: var(--svt-pink-light);
+  --sub-task-c-bg-in-selected: var(--svt-pink-lighter);
+
+  /* Note backgrounds */
+  --standard-note-bg: var(--svt-white);
+  --standard-note-bg-hovered: var(--svt-pink-light);
+
+  /* ===============================
+   * TEXT COLORS - HIGH CONTRAST
+   * ===============================*/
+
+  --text-color: var(--svt-gray-dark);
+  --text-color-less-intense: rgba(74, 85, 104, 0.87);
+  --text-color-muted: rgba(74, 85, 104, 0.54);
+  --text-color-more-intense: var(--svt-blue-darkest);
+  --text-color-most-intense: var(--svt-blue-darkest);
+
+  /* Note text */
+  --standard-note-fg: var(--svt-gray-dark);
+
+  /* Task detail */
+  --task-detail-value-color: rgba(74, 85, 104, 0.7);
+
+  /* ===============================
+   * BORDERS & SEPARATORS
+   * ===============================*/
+
+  --extra-border-color: var(--svt-gray);
+  --separator-color: rgba(255, 192, 203, 0.3);
+  --divider-color: var(--svt-gray);
+
+  /* Chip borders */
+  --chip-outline-color: rgba(74, 85, 104, 0.23);
+
+  /* ===============================
+   * ACCENT & THEME COLORS
+   * ===============================*/
+
+  /* Seventeen pink as primary accent */
+  --palette-accent-500: var(--svt-pink);
+  --c-accent: var(--svt-blue);
+  --palette-accent-100: #ffd6db;
+  --palette-accent-200: #ffadb7;
+  --palette-accent-300: #ff8493;
+  --palette-accent-400: #ff5b6f;
+  --palette-accent-600: #e6959f;
+  --palette-accent-700: #cc6a7f;
+  --palette-accent-800: #b33f5f;
+  --palette-accent-900: #99143f;
+
+  /* Seventeen blue as secondary accent */
+  --svt-blue-accent: var(--svt-blue);
+
+  /* Secondary colors */
+  --c-success: #48bb78;
+  --c-warning: #ed8936;
+  --c-error: #f56565;
+  --c-info: var(--svt-blue);
+
+  /* ===============================
+   * UI ELEMENTS
+   * ===============================*/
+
+  /* Scrollbar - Seventeen styled */
+  --scrollbar-thumb: var(--svt-pink);
+  --scrollbar-thumb-hover: var(--svt-blue);
+  --scrollbar-track: var(--svt-gray-light);
+
+  /* Close button */
+  --close-btn-bg: var(--svt-pink-light);
+  --close-btn-border: transparent;
+
+  /* Select/Options */
+  --select-hover-bg: rgba(255, 192, 203, 0.1);
+  --options-border-color: rgba(255, 192, 203, 0.2);
+
+  /* Attachments */
+  --attachment-bg: var(--svt-white);
+  --attachment-border: var(--svt-gray);
+  --attachment-control-bg: rgba(255, 255, 255, 0.9);
+  --attachment-control-border: var(--svt-pink);
+  --attachment-control-hover-bg: var(--svt-pink-light);
+
+  /* Grid */
+  --grid-color: rgba(255, 192, 203, 0.15);
+
+  /* Progress */
+  --progress-bg: rgba(255, 192, 203, 0.2);
+
+  /* Improvement banner */
+  --improvement-text: var(--svt-blue-darkest);
+  --improvement-border: rgba(255, 192, 203, 0.4);
+  --improvement-button-text: var(--svt-blue-darkest);
+
+  /* ===============================
+   * SHADOWS - DISABLED
+   * ===============================*/
+
+  --shadow-key-umbra-opacity: 0;
+  --shadow-key-penumbra-opacity: 0;
+  --shadow-ambient-shadow-opacity: 0;
+  --task-current-shadow: none;
+  --task-selected-shadow: none;
+
+  /* ===============================
+   * HOVER CONTROLS
+   * ===============================*/
+
+  --hover-controls-border: none;
+  --hover-controls-border-opacity: 0;
+
+  /* ===============================
+   * INTERACTION STATES
+   * ===============================*/
+
+  --hover-bg-opacity: 0.04;
+  --focus-bg-opacity: 0.08;
+  --pressed-bg-opacity: 0.12;
+  --disabled-opacity: 0.38;
+
+  /* ===============================
+   * BACKDROP
+   * ===============================*/
+
+  --c-backdrop: rgba(182, 215, 255, 0.4);
+}
+
+/* Hide gradient backgrounds */
+body::before,
+body .first-line:hover .hover-controls::before {
+  display: none !important;
+}
+
+/* Apply background and text colors */
+body,
+body:not(.isDarkTheme) {
+  background-color: var(--bg);
+  color: var(--text-color);
+  transition:
+    background-color var(--transition-normal),
+    color var(--transition-normal);
+}
+
+/* Page wrapper */
+body .page-wrapper,
+body:not(.isDarkTheme) .page-wrapper {
+  color: var(--text-color);
+}
+
+/* Links with Seventeen accent */
+a,
+body a[href],
+body:not(.isDarkTheme) a[href] {
+  color: var(--svt-blue);
+  text-decoration: none;
+  transition: 
+    opacity var(--transition-fast),
+    color var(--transition-fast);
+}
+
+a:hover,
+body a[href]:hover,
+body:not(.isDarkTheme) a[href]:hover {
+  color: var(--svt-pink);
+  opacity: 0.8;
+}
+
+/* Smooth hover states with Seventeen colors */
+.task-c:hover,
+.sub-task-c:hover {
+  background-color: var(--svt-pink-light);
+  transition: background-color var(--transition-fast);
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--svt-blue);
+  outline-offset: 2px;
+}
+
+/* Material overrides for Seventeen theme */
+body:not(.isDarkTheme) {
+  --mat-theme-surface: var(--card-bg);
+  --mat-theme-on-surface: var(--text-color);
+  --mat-theme-background: var(--bg);
+  --mat-theme-primary: var(--svt-blue);
+  --mat-fab-small-container-color: var(--svt-pink);
+  --mat-sys-primary-container: var(--svt-pink-light);
+}
+
+/* Special Seventeen styling classes */
+.seventeen-pink {
+  color: var(--svt-pink);
+}
+
+.seventeen-blue {
+  color: var(--svt-blue);
+}
+
+.seventeen-light-blue {
+  color: var(--svt-light-blue);
+}
+
+.seventeen-dark-blue {
+  color: var(--svt-dark-blue);
+}
+
+/* Button styling with Seventeen colors */
+button:not(.mat-button-disabled) {
+  background-color: var(--svt-blue);
+  color: white;
+  border: none;
+  transition: background-color var(--transition-fast);
+}
+
+button:not(.mat-button-disabled):hover {
+  background-color: var(--svt-pink);
+}
+
+/* Special styling for primary actions */
+.mat-raised-button.mat-primary,
+.mat-fab.mat-primary,
+.mat-mini-fab.mat-primary {
+  background-color: var(--svt-pink);
+  color: white;
+}
+
+.mat-raised-button.mat-primary:hover,
+.mat-fab.mat-primary:hover,
+.mat-mini-fab.mat-primary:hover {
+  background-color: var(--svt-blue);
+}
+
+/* Navigation styling */
+.sidenav {
+  background: linear-gradient(135deg, var(--svt-pink-lighter) 0%, var(--svt-white) 100%);
+}
+
+/* Task completion styling */
+.task-done .task-title {
+  color: var(--svt-blue) !important;
+  text-decoration: line-through;
+  opacity: 0.7;
+}

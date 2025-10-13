@@ -1,5 +1,18 @@
 @use 'styles/globals' as *;
 
+// Folder expand/collapse icon animation
+.folder-icon {
+  transition: transform 0.3s ease-in-out;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+
+  &.collapsed {
+    transform: rotate(0deg);
+  }
+}
+
 :host {
   display: flex !important;
   align-items: stretch;
@@ -76,6 +89,7 @@
   right: 16px;
   display: flex;
   align-items: center;
+  color: var(--text-color-muted);
   // avoid affecting drag handle
   pointer-events: none;
 
@@ -85,6 +99,7 @@
 }
 
 // Active state visuals - ensure they override Angular Material styles
+//button[mat-menu-item].nav-link[routerlinkactive="active"],
 button[mat-menu-item].nav-link.active {
   color: var(--sidenav-active-text) !important;
   background: var(--sidenav-active) !important;
@@ -170,6 +185,7 @@ button[mat-menu-item].nav-link.active {
   &.active {
     background: var(--sidenav-active);
     color: var(--sidenav-active-text);
+    box-shadow: var(--whiteframe-shadow-1dp);
 
     .nav-icon {
       color: var(--sidenav-active-text);
@@ -198,6 +214,23 @@ button[mat-menu-item].nav-link.active {
   color: var(--sidenav-text-secondary);
   font-size: 18px;
   line-height: 1;
+
+  // Emoji-specific styling
+  &.nav-icon-emoji {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-size: 16px;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    // Better emoji rendering
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
 }
 
 .expand-icon {
@@ -206,31 +239,6 @@ button[mat-menu-item].nav-link.active {
 
 .expanded .expand-icon {
   transform: rotate(180deg);
-}
-
-:host-context(.isLightTheme .nav-sidenav.compactMode) {
-  .nav-link {
-    &.active {
-      color: var(--sidenav-active-text) !important;
-      background: var(--sidenav-active) !important;
-      border-radius: 48px;
-      border-bottom: 1px solid var(--separator-color);
-      border-top: 1px solid var(--separator-color);
-
-      &::after {
-        position: absolute;
-        inset: 4px;
-      }
-
-      .nav-icon {
-        color: var(--sidenav-active-text) !important;
-      }
-
-      .nav-label {
-        color: var(--sidenav-active-text) !important;
-      }
-    }
-  }
 }
 
 :host-context(.nav-sidenav.compactMode) {
@@ -246,6 +254,7 @@ button[mat-menu-item].nav-link.active {
     &.active {
       color: var(--sidenav-active-text) !important;
       background: var(--sidenav-active) !important;
+      box-shadow: var(--whiteframe-shadow-1dp);
 
       &::after {
         position: absolute;
@@ -260,6 +269,10 @@ button[mat-menu-item].nav-link.active {
         color: var(--sidenav-active-text) !important;
       }
     }
+
+    ::ng-deep .mat-mdc-menu-item-text {
+      display: none;
+    }
   }
 
   .nav-icon {
@@ -271,8 +284,8 @@ button[mat-menu-item].nav-link.active {
     display: none !important;
   }
 
-  a:first-of-type ::ng-deep .mat-mdc-menu-item-text,
-  button:first-of-type ::ng-deep .mat-mdc-menu-item-text {
+  // Hide only text labels, not icons in compact mode
+  .nav-label {
     display: none !important;
   }
 

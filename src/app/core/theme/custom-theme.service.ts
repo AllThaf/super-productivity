@@ -64,6 +64,12 @@ export const AVAILABLE_CUSTOM_THEMES: CustomTheme[] = [
     url: 'assets/themes/nord-snow-storm.css',
     requiredMode: 'light',
   },
+  {
+    id: 'seventeen',
+    name: 'Seventeen',
+    url: 'assets/themes/seventeen.css',
+    requiredMode: 'light',
+  }
 ];
 
 @Injectable({ providedIn: 'root' })

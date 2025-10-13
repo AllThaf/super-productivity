@@ -1,14 +1,15 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   HostBinding,
   HostListener,
   inject,
+  NgZone,
   OnDestroy,
   ViewChild,
 } from '@angular/core';
@@ -52,7 +53,7 @@ import { BannerComponent } from './core/banner/banner/banner.component';
 import { GlobalProgressBarComponent } from './core-ui/global-progress-bar/global-progress-bar.component';
 import { FocusModeOverlayComponent } from './features/focus-mode/focus-mode-overlay/focus-mode-overlay.component';
 import { ShepherdComponent } from './features/shepherd/shepherd.component';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { RightPanelComponent } from './features/right-panel/right-panel.component';
 import { selectIsOverlayShown } from './features/focus-mode/store/focus-mode.selectors';
 import { Store } from '@ngrx/store';
@@ -81,7 +82,7 @@ import { ProjectService } from './features/project/project.service';
 import { TagService } from './features/tag/tag.service';
 import { ContextMenuComponent } from './ui/context-menu/context-menu.component';
 import { WorkContextThemeCfg } from './features/work-context/work-context.model';
-import { IsInputElement } from './util/dom-element';
+import { isInputElement } from './util/dom-element';
 import { MobileBottomNavComponent } from './core-ui/mobile-bottom-nav/mobile-bottom-nav.component';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -89,8 +90,11 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const w = window as any;
-const productivityTip: string[] = w.productivityTips && w.productivityTips[w.randomIndex];
+const w = window as Window & { productivityTips?: string[][]; randomIndex?: number };
+const productivityTip: string[] | undefined =
+  w.productivityTips && w.randomIndex !== undefined
+    ? w.productivityTips[w.randomIndex]
+    : undefined;
 
 @Component({
   selector: 'app-root',
@@ -147,7 +151,9 @@ export class AppComponent implements OnDestroy, AfterViewInit {
   private _syncWrapperService = inject(SyncWrapperService);
   private _projectService = inject(ProjectService);
   private _tagService = inject(TagService);
-  private _cdr = inject(ChangeDetectorRef);
+  private _destroyRef = inject(DestroyRef);
+  private _ngZone = inject(NgZone);
+  private _document = inject(DOCUMENT, { optional: true });
 
   // needs to be imported for initialization
   private _syncSafetyBackupService = inject(SyncSafetyBackupService);
@@ -159,10 +165,10 @@ export class AppComponent implements OnDestroy, AfterViewInit {
   readonly globalThemeService = inject(GlobalThemeService);
   readonly _store = inject(Store);
   readonly T = T;
-  readonly isShowMobileButtonNav = this.globalThemeService.isShowMobileButtonNav;
+  readonly isShowMobileButtonNav = this.layoutService.isShowMobileBottomNav;
 
-  productivityTipTitle: string = productivityTip && productivityTip[0];
-  productivityTipText: string = productivityTip && productivityTip[1];
+  productivityTipTitle: string = productivityTip?.[0] || '';
+  productivityTipText: string = productivityTip?.[1] || '';
 
   @ViewChild('routeWrapper', { read: ElementRef }) routeWrapper?: ElementRef<HTMLElement>;
 
@@ -233,7 +239,8 @@ export class AppComponent implements OnDestroy, AfterViewInit {
       // init offline banner in lack of a better place for it
       this._initOfflineBanner();
 
-      if (this._globalConfigService.misc()?.isShowTipLonger) {
+      const miscCfg = this._globalConfigService.misc();
+      if (!miscCfg?.isDisableProductivityTips) {
         this._snackService.open({
           ico: 'lightbulb',
           config: {
@@ -241,9 +248,15 @@ export class AppComponent implements OnDestroy, AfterViewInit {
           },
           msg:
             '<strong>' +
-            (window as any).productivityTips[(window as any).randomIndex][0] +
+            w.productivityTips![w.randomIndex!][0] +
             ':</strong> ' +
-            (window as any).productivityTips[(window as any).randomIndex][1],
+            w.productivityTips![w.randomIndex!][1],
+          actionStr: T.G.DONT_SHOW_AGAIN,
+          actionFn: () => {
+            this._globalConfigService.updateSection('misc', {
+              isDisableProductivityTips: true,
+            });
+          },
         });
       }
 
@@ -321,23 +334,10 @@ export class AppComponent implements OnDestroy, AfterViewInit {
     }
   }
 
-  @HostListener('document:keydown', ['$event']) onKeyDown(ev: KeyboardEvent): void {
-    this._shortcutService.handleKeyDown(ev);
-  }
-
-  // prevent page reloads on missed drops
-  @HostListener('document:dragover', ['$event']) onDragOver(ev: DragEvent): void {
-    ev.preventDefault();
-  }
-
-  @HostListener('document:drop', ['$event']) onDrop(ev: DragEvent): void {
-    ev.preventDefault();
-  }
-
   @HostListener('document:paste', ['$event']) onPaste(ev: ClipboardEvent): void {
     // Skip handling inside input elements
     const target = ev.target as HTMLElement;
-    if (IsInputElement(target)) return;
+    if (isInputElement(target)) return;
 
     const clipboardData = ev.clipboardData;
     if (!clipboardData) return;
@@ -477,8 +477,37 @@ export class AppComponent implements OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Trigger change detection to ensure the context menu component gets the element reference
-    this._cdr.detectChanges();
+    this._ngZone.runOutsideAngular(() => {
+      const doc = this._document!;
+      // Handle global document events outside Angular to avoid change detection churn.
+      // - dragover/drop: block the browser's default file-drop navigation.
+      // - keydown: route shortcuts and only re-enter Angular when they matter.
+      // Prevent the browser from treating file drops as navigation events
+      const onDragOver = (ev: DragEvent): void => {
+        ev.preventDefault();
+      };
+
+      // Ensure accidental file drops don’t replace the SPA with the dropped file
+      const onDrop = (ev: DragEvent): void => {
+        ev.preventDefault();
+      };
+
+      const onKeyDown = (ev: KeyboardEvent): void => {
+        this._ngZone.run(() => {
+          void this._shortcutService.handleKeyDown(ev);
+        });
+      };
+
+      doc.addEventListener('dragover', onDragOver, { passive: false });
+      doc.addEventListener('drop', onDrop, { passive: false });
+      doc.addEventListener('keydown', onKeyDown);
+
+      this._destroyRef.onDestroy(() => {
+        doc.removeEventListener('dragover', onDragOver);
+        doc.removeEventListener('drop', onDrop);
+        doc.removeEventListener('keydown', onKeyDown);
+      });
+    });
   }
 
   ngOnDestroy(): void {
@@ -513,7 +542,7 @@ export class AppComponent implements OnDestroy, AfterViewInit {
       }
       try {
         await this._pfapiService.importCompleteBackup(
-          legacyData as any as AppDataCompleteNew,
+          legacyData as unknown as AppDataCompleteNew,
           true,
           true,
         );
@@ -542,7 +571,10 @@ export class AppComponent implements OnDestroy, AfterViewInit {
           alert(
             this._translateService.instant(T.MIGRATE.E_MIGRATION_FAILED) +
               '\n\n' +
-              JSON.stringify((error as any).additionalLog[0].errors),
+              JSON.stringify(
+                (error as { additionalLog?: Array<{ errors: unknown }> })
+                  .additionalLog?.[0]?.errors,
+              ),
           );
         } catch (e) {
           alert(

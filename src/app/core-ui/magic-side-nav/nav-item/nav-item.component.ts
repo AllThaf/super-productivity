@@ -13,7 +13,9 @@ import {
   WorkContextType,
 } from '../../../features/work-context/work-context.model';
 import { Project } from '../../../features/project/project.model';
+import { DEFAULT_PROJECT_ICON } from '../../../features/project/project.const';
 import { WorkContextMenuComponent } from '../../work-context-menu/work-context-menu.component';
+import { FolderContextMenuComponent } from '../../folder-context-menu/folder-context-menu.component';
 import { ContextMenuComponent } from '../../../ui/context-menu/context-menu.component';
 import { CdkDragPlaceholder } from '@angular/cdk/drag-drop';
 import { MatIconButton } from '@angular/material/button';
@@ -23,6 +25,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { selectAllDoneIds } from '../../../features/tasks/store/task.selectors';
 import { Store } from '@ngrx/store';
 import { TranslatePipe } from '@ngx-translate/core';
+import { isSingleEmoji } from '../../../util/extract-first-emoji';
 
 @Component({
   selector: 'nav-item',
@@ -30,6 +33,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     RouterLink,
     RouterModule,
     WorkContextMenuComponent,
+    FolderContextMenuComponent,
     ContextMenuComponent,
     CdkDragPlaceholder,
     MatIconButton,
@@ -57,24 +61,25 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class NavItemComponent {
   private readonly _store = inject(Store);
 
-  // Mode selection
-  mode = input<'work' | 'row'>('work');
-
-  // Container selection for non-work modes
+  mode = input<'work' | 'folder' | 'row'>('work');
+  variant = input<'default' | 'nav'>('default');
   container = input<'route' | 'href' | 'action' | 'group' | null>(null);
+
   navRoute = input<string | any[] | undefined>(undefined);
   navHref = input<string | undefined>(undefined);
   expanded = input<boolean>(false);
-  ariaControls = input<string | null>(null);
 
+  ariaControls = input<string | null>(null);
   // Work context inputs
   workContext = input<WorkContextCommon | null>(null);
   type = input<WorkContextType | null>(null);
-  defaultIcon = input<string>('folder_special');
-  activeWorkContextId = input<string>('');
+  defaultIcon = input<string>(DEFAULT_PROJECT_ICON);
 
+  activeWorkContextId = input<string>('');
+  // Folder inputs
+
+  folderId = input<string | null>(null);
   // Variant styling to integrate into magic-side-nav without deep selectors
-  variant = input<'default' | 'nav'>('default');
   showMoreButton = input<boolean>(true);
 
   // Presentational row inputs
@@ -120,5 +125,19 @@ export class NavItemComponent {
   isHidden = computed<boolean>(() => {
     const wc = this.workContext();
     return !!(wc as Project | null)?.isHiddenFromMenu;
+  });
+
+  // Emoji detection for work context icons
+  isWorkContextEmojiIcon = computed<boolean>(() => {
+    const wc = this.workContext();
+    if (!wc) return false;
+    const icon = wc.icon || this.defaultIcon();
+    return isSingleEmoji(icon);
+  });
+
+  // Emoji detection for presentational icons
+  isPresentationalEmojiIcon = computed<boolean>(() => {
+    const iconValue = this.icon();
+    return iconValue ? isSingleEmoji(iconValue) : false;
   });
 }

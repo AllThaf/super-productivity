@@ -41,7 +41,7 @@ import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
-import { MatButton, MatFabButton, MatMiniFabButton } from '@angular/material/button';
+import { MatButton, MatMiniFabButton } from '@angular/material/button';
 import { AddTaskBarComponent } from '../tasks/add-task-bar/add-task-bar.component';
 import { AddScheduledTodayOrTomorrowBtnComponent } from '../add-tasks-for-tomorrow/add-scheduled-for-tomorrow/add-scheduled-today-or-tomorrow-btn.component';
 import { TaskListComponent } from '../tasks/task-list/task-list.component';
@@ -86,7 +86,6 @@ import { FinishDayBtnComponent } from './finish-day-btn/finish-day-btn.component
     TaskListComponent,
     SplitComponent,
     BacklogComponent,
-    MatFabButton,
     AsyncPipe,
     MsToStringPipe,
     TranslatePipe,
@@ -126,7 +125,7 @@ export class WorkViewComponent implements OnInit, OnDestroy, AfterContentInit {
 
   hasDoneTasks = computed(() => this.doneTasks().length > 0);
 
-  isPlanningMode = toSignal(this.planningModeService.isPlanningMode$);
+  isPlanningMode = this.planningModeService.isPlanningMode;
   todayRemainingInProject = toSignal(this.workContextService.todayRemainingInProject$);
   estimateRemainingToday = toSignal(this.workContextService.estimateRemainingToday$);
   workingToday = toSignal(this.workContextService.workingToday$);
@@ -184,7 +183,12 @@ export class WorkViewComponent implements OnInit, OnDestroy, AfterContentInit {
       const doneArr = flattenTasks(this.doneTasks());
       if (doneArr.some((t) => t.id === currentSelectedId)) return;
 
-      if (this.laterTodayTasks().some((t) => t.id === currentSelectedId)) return;
+      if (
+        this.laterTodayTasks().some(
+          (t) => t.id === currentSelectedId || t.subTaskIds.includes(currentSelectedId),
+        )
+      )
+        return;
 
       if (
         this.workContextService.activeWorkContextId === TODAY_TAG.id &&

@@ -73,6 +73,7 @@ import { isToday } from '../../../../util/is-today.util';
 import { MenuTouchFixDirective } from '../menu-touch-fix.directive';
 import { TaskLog } from '../../../../core/log';
 import { isTouchEventInstance } from '../../../../util/is-touch-event.util';
+import { TaskFocusService } from '../../task-focus.service';
 
 @Component({
   selector: 'task-context-menu-inner',
@@ -110,6 +111,7 @@ export class TaskContextMenuInnerComponent implements AfterViewInit {
   private readonly _tagService = inject(TagService);
   private readonly _translateService = inject(TranslateService);
   private readonly _workContextService = inject(WorkContextService);
+  private readonly _taskFocusService = inject(TaskFocusService);
 
   protected readonly IS_TOUCH_PRIMARY = IS_TOUCH_PRIMARY;
   protected readonly T = T;
@@ -199,14 +201,22 @@ export class TaskContextMenuInnerComponent implements AfterViewInit {
 
     this._isOpenedFromKeyboard = isOpenedFromKeyBoard;
     this.contextMenuTrigger()?.openMenu();
+    // we have a race condition
+    window.setTimeout(() => {
+      this._taskFocusService.focusedTaskId.set(this.task.id);
+    });
   }
 
   focusRelatedTaskOrNext(): void {
-    // NOTE: not active for now
-    // this.focusTaskOrNextAfter.emit();
+    // Focus the task element after context menu closes
+    const taskElement = document.querySelector(`#t-${this.task.id}`) as HTMLElement;
+    if (taskElement) {
+      taskElement.focus();
+    }
   }
 
   onClose(): void {
+    this._taskFocusService.focusedTaskId.set(null);
     this.focusRelatedTaskOrNext();
     this.close.emit();
   }

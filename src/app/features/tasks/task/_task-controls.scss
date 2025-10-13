@@ -51,10 +51,10 @@
     margin-left: 5px;
   }
 
-  @include smallMainContainer {
-    white-space: normal;
-    margin-left: 5px;
-  }
+  //@include smallMainContainer {
+  //  white-space: normal;
+  //  margin-left: 5px;
+  //}
 
   //@include verySmallMainContainer {
   //  min-height: 40px;
@@ -113,6 +113,10 @@
 
   @include mq(xxs) {
     min-width: 0;
+  }
+
+  @include verySmallMainContainer {
+    display: none;
   }
 
   &.isEditable {
@@ -175,7 +179,7 @@
   }
 
   //@include smallMainContainer {
-  //  @include timeWrapperMinimalStyles;
+  @include timeWrapperMinimalStyles;
   //}
 
   @include mq(xs, max) {
@@ -353,6 +357,12 @@ progress-bar {
   pointer-events: all;
 
   @include grabCursor();
+
+  @include verySmallMainContainer {
+    width: 8px;
+    min-width: 0;
+    opacity: 0;
+  }
 
   > * {
     pointer-events: none;
