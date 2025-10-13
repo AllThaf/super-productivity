@@ -6,6 +6,7 @@ import {
   computed,
   OnInit,
   AfterViewInit,
+  signal,
 } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -29,15 +30,30 @@ import { FH } from '../schedule.const';
 import { mapToScheduleDays } from '../map-schedule-data/map-to-schedule-days';
 import { mapScheduleDaysToScheduleEvents } from '../map-schedule-data/map-schedule-days-to-schedule-events';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatIcon } from '@angular/material/icon';
 import { selectTaskRepeatCfgsWithAndWithoutStartTime } from '../../task-repeat-cfg/store/task-repeat-cfg.selectors';
 import { ScheduleWeekComponent } from '../schedule-week/schedule-week.component';
 import { ScheduleMonthComponent } from '../schedule-month/schedule-month.component';
 import { ScheduleService } from '../schedule.service';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
 
 @Component({
   selector: 'schedule',
-  imports: [LocaleDatePipe, ScheduleWeekComponent, ScheduleMonthComponent, MatIcon],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    FormsModule,
+    LocaleDatePipe,
+    ScheduleWeekComponent,
+    ScheduleMonthComponent,
+    MatIconModule,
+    MatMenuModule,
+    MatTooltip,
+  ],
   templateUrl: './schedule.component.html',
   styleUrl: './schedule.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +72,13 @@ export class ScheduleComponent implements AfterViewInit {
   private _store = inject(Store);
   private _globalTrackingIntervalService = inject(GlobalTrackingIntervalService);
   private _route = inject(ActivatedRoute);
+
+  currentMonth = signal(new Date().getMonth());
+  currentYear = signal(new Date().getFullYear());
+
+  isEditMonthYear = signal(false);
+  editMonth: string = '';
+  editYear: string = '';
 
   private _currentTimeViewMode = computed(() => this.layoutService.selectedTimeView());
   isMonthView = computed(() => this._currentTimeViewMode() === 'month');
@@ -110,10 +133,59 @@ export class ScheduleComponent implements AfterViewInit {
     this._todayDateStr();
 
     if (selectedView === 'month') {
-      return this.scheduleService.getMonthDaysToShow(count);
+      return this.scheduleService.getMonthDaysToShow(
+        count,
+        this.currentMonth(),
+        this.currentYear(),
+      );
     }
     return this.scheduleService.getDaysToShow(count);
   });
+
+  getPrevMonth(): void {
+    if (this.currentMonth() === 0) {
+      this.currentMonth.set(11);
+      this.currentYear.set(this.currentYear() - 1);
+    } else {
+      this.currentMonth.set(this.currentMonth() - 1);
+    }
+  }
+
+  getNextMonth(): void {
+    if (this.currentMonth() === 11) {
+      this.currentMonth.set(0);
+      this.currentYear.set(this.currentYear() + 1);
+    } else {
+      this.currentMonth.set(this.currentMonth() + 1);
+    }
+  }
+
+  showEditMonthYear(): void {
+    this.editMonth = String(this.currentMonth() + 1).padStart(2, '0');
+    this.editYear = String(this.currentYear());
+    this.isEditMonthYear.set(true);
+  }
+
+  cancelEditMonthYear(): void {
+    this.isEditMonthYear.set(false);
+  }
+
+  jumpToMonthYear(): void {
+    const month = parseInt(this.editMonth, 10) - 1;
+    const year = parseInt(this.editYear, 10);
+    if (
+      !isNaN(month) &&
+      month >= 0 &&
+      month <= 11 &&
+      !isNaN(year) &&
+      year > 1900 &&
+      year < 2100
+    ) {
+      this.currentMonth.set(month);
+      this.currentYear.set(year);
+      this.isEditMonthYear.set(false);
+    }
+  }
 
   weeksToShow = computed(() => Math.ceil(this.daysToShow().length / 7));
 

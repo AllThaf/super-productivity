@@ -1,4 +1,8 @@
-<div class="month-grid-container">
+<div
+  class="month-grid-container"
+  #monthContainer
+  tabindex="0"
+>
   <div class="weekday-header">Sun</div>
   <div class="weekday-header">Mon</div>
   <div class="weekday-header">Tue</div>
@@ -12,9 +16,12 @@
     @let dayIndex = getDayIndex($index);
     @if (weekIndex < weeksToShow) {
       <div
-        class="month-day-cell {{ getDayClass(day) }}"
+        class="month-day-cell {{ getDayClass(day) }} {{
+          isPastDate(day) ? 'past-date' : ''
+        }}"
         [attr.data-day]="day"
         style="grid-row: {{ weekIndex + 2 }}; grid-column: {{ dayIndex + 1 }}"
+        (click)="onDayClick(day, $event)"
       >
         <div class="month-day-header">
           <span class="month-day-number">{{ day | date: 'd' }}</span>
@@ -36,6 +43,15 @@
             </div>
           }
         </div>
+
+        @if (isCreateTaskActive() && selectedDay() === day) {
+          <create-task-placeholder
+            [isEditMode]="true"
+            [date]="selectedDay()"
+            (editEnd)="onCreateTaskEnd()"
+            class="month-create-task"
+          ></create-task-placeholder>
+        }
       </div>
     }
   }
