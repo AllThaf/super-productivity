@@ -6,6 +6,7 @@ import {
   computed,
   OnInit,
   AfterViewInit,
+  signal,
 } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -33,7 +34,6 @@ import { selectTaskRepeatCfgsWithAndWithoutStartTime } from '../../task-repeat-c
 import { ScheduleWeekComponent } from '../schedule-week/schedule-week.component';
 import { ScheduleMonthComponent } from '../schedule-month/schedule-month.component';
 import { ScheduleService } from '../schedule.service';
-import { signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';

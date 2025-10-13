@@ -163,21 +163,6 @@ export class ScheduleService {
     return classes;
   }
 
-  // getDayClass(day: string, currentMonth: number, currentYear: number): string {
-  //   const dayDate = new Date(day);
-  //   const isCurrentMonth =
-  //     dayDate.getMonth() === currentMonth &&
-  //     dayDate.getFullYear() === currentYear;
-  //   const today = new Date();
-  //   const isToday = dayDate.toDateString() === today.toDateString();
-
-  //   let classes = '';
-  //   if (!isCurrentMonth) classes += ' other-month';
-  //   if (isToday) classes += ' today';
-
-  //   return classes;
-  // }
-
   hasEventsForDay(day: string, events: ScheduleEvent[] | null): boolean {
     if (!events) {
       return false;

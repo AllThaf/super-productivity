@@ -101,6 +101,10 @@ export class CreateTaskPlaceholderComponent implements OnDestroy {
       if (this.isEditMode()) {
         this._focusSelectTaskMinimal();
       }
+
+      if (!this.time() && this.date()) {
+        this.isForDayMode.set(true);
+      }
     });
   }
 
@@ -191,7 +195,7 @@ export class CreateTaskPlaceholderComponent implements OnDestroy {
   async onSelectTaskKeyDown(event: KeyboardEvent): Promise<void> {
     if (
       event.key === 'Enter' &&
-      this.due() &&
+      (this.due() || this.isForDayMode()) &&
       (this.selectedTask() || this.newTaskTitle())
     ) {
       await this.addTask();
@@ -241,10 +245,13 @@ export class CreateTaskPlaceholderComponent implements OnDestroy {
         if (!task) {
           throw new Error(`Failed to retrieve task after creation. Task ID: ${id}`);
         }
+
+        const dayStr = this.date() || getDbDateStr(new Date());
+
         this._store.dispatch(
           PlannerActions.planTaskForDay({
             task: task,
-            day: getDbDateStr(this.due()),
+            day: dayStr,
           }),
         );
       } else {
@@ -269,11 +276,13 @@ export class CreateTaskPlaceholderComponent implements OnDestroy {
 
   private async scheduleExistingTask(task: Task): Promise<void> {
     if (this.isForDayMode()) {
+      const dayStr = this.date() || getDbDateStr(new Date());
+
       // Plan existing task for day
       this._store.dispatch(
         PlannerActions.planTaskForDay({
           task: task,
-          day: getDbDateStr(this.due()),
+          day: dayStr,
         }),
       );
     } else {
